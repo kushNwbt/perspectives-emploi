@@ -227,3 +227,20 @@ function openComparisonView(){
 }
 document.querySelectorAll('[data-view="comparison"],.sidebar a[href="#comparaison"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openComparisonView()}));
 document.getElementById("comparisonBackHome").addEventListener("click",openHome);
+
+
+const trainingView=document.getElementById("trainingView");
+function renderTraining(){
+  const empty=document.getElementById("trainingEmpty"),content=document.getElementById("trainingContent"),target=document.getElementById("trainingTarget"),open=document.getElementById("trainingOpen");
+  let job=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
+  if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour rechercher une formation.";return}
+  empty.hidden=true;content.hidden=false;
+  target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
+  open.href="https://candidat.francetravail.fr/formations/recherche?quoi="+encodeURIComponent(job.libelle);
+}
+function openTrainingView(){
+  homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);trainingView.hidden=false;renderTraining();window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#formations"]');if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="training"],.sidebar a[href="#formations"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openTrainingView()}));
+document.getElementById("trainingBackHome").addEventListener("click",openHome);

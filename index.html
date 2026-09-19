@@ -51,9 +51,17 @@
       <article id="competences" class="module-link" data-view="skills"><i>◇</i><div><h3>Compétences & métiers</h3><p>Compétences identifiées, transférables et métiers proches.</p></div><b>→</b></article>
       <article id="offres" class="module-link" data-view="offers"><i>⌕</i><div><h3>Offres d’emploi</h3><p>Explorer les opportunités liées aux métiers sélectionnés.</p></div><b>→</b></article>
       <article id="comparaison" class="module-link" data-view="comparison"><i>⇄</i><div><h3>CV ↔ Offre</h3><p>Comparer une offre avec le CV sans modifier le parcours.</p></div><b>→</b></article>
-      <article id="formations"><i>▣</i><div><h3>Formations</h3><p>Identifier des formations en lien avec le projet.</p></div><b>→</b></article>
+      <article id="formations" class="module-link" data-view="training"><i>▣</i><div><h3>Formations</h3><p>Identifier des formations en lien avec le projet.</p></div><b>→</b></article>
       <article id="marche"><i>▥</i><div><h3>Marché du travail</h3><p>Comprendre le métier et son environnement d’emploi.</p></div><b>→</b></article>
       <article id="plan" class="wide"><i>✓</i><div><h3>Plan d’action</h3><p>Réunir les priorités CV, métiers, compétences et prochaines étapes.</p></div><b>→</b></article>
+    </div>
+  </section>
+  <section id="trainingView" class="diagnostic-view" hidden>
+    <div class="diag-head"><div><span class="eyebrow dark">FORMATIONS</span><h2>Rechercher une formation</h2><p>Préparez une recherche France Travail à partir du métier ROME sélectionné.</p></div><button id="trainingBackHome" type="button">← Retour à l’accueil</button></div>
+    <div id="trainingEmpty" class="diag-empty"></div>
+    <div id="trainingContent" class="training-content" hidden>
+      <div id="trainingTarget" class="skills-target"></div>
+      <div class="training-card"><h3>Catalogue de formations France Travail</h3><p>La recherche reprend automatiquement le métier sélectionné. Vous pourrez ensuite préciser le lieu et les autres critères directement dans le catalogue.</p><a id="trainingOpen" target="_blank" rel="noopener">Rechercher les formations →</a></div>
     </div>
   </section>
   <section id="comparisonView" class="diagnostic-view" hidden>
