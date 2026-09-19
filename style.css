@@ -34,3 +34,5 @@
 .comparison-title{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.comparison-remove{flex:0 0 auto;border:1px solid #d7dcef;background:#fff;color:#283276;border-radius:9px;padding:8px 11px;font-weight:700;cursor:pointer}.comparison-remove:hover{background:#f5f6fb}@media(max-width:600px){.comparison-title{flex-direction:column}.comparison-remove{align-self:flex-start}}
 
 .comparison-toolbar{display:flex;justify-content:flex-end;margin:0 0 14px}.comparison-toolbar button{border:0;border-radius:9px;background:#283276;color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}
+
+#comparisonEmpty button{margin-top:10px;border:0;border-radius:9px;background:#283276;color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}
