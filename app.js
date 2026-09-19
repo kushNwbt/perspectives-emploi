@@ -329,3 +329,5 @@ syncOffersClear();
 document.getElementById("comparisonAddOffers").addEventListener("click",openOffersView);
 
 document.getElementById("comparisonReviewCv").addEventListener("click",openCvDiagnostic);
+
+document.getElementById("comparisonReviewSkills").addEventListener("click",openSkillsView);
