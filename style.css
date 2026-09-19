@@ -46,3 +46,5 @@
 .session-summary{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:14px 18px;background:#f5f6fb;border:1px solid #dde1ef;border-radius:12px;color:#283276}.session-summary[hidden]{display:none}.session-summary span{color:#5c647e;font-size:.94rem}
 
 .session-summary button{margin-left:auto;border:0;border-radius:8px;background:#283276;color:#fff;padding:9px 13px;font-weight:700;cursor:pointer}.session-summary button:hover{filter:brightness(.95)}
+
+.training-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.training-grid .training-card{height:100%}.training-grid button{border:0;border-radius:9px;background:#283276;color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}@media(max-width:850px){.training-grid{grid-template-columns:1fr}}
