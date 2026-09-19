@@ -337,6 +337,9 @@ async def offres_emploi(code_rome: str = Query(..., min_length=5, max_length=5),
             "entreprise": entreprise.get("nom", ""),
             "lieu": lieu.get("libelle", ""),
             "typeContrat": item.get("typeContratLibelle") or item.get("typeContrat", ""),
+            "description": item.get("description", ""),
+            "competences": [c.get("libelle", "") for c in (item.get("competences") or []) if isinstance(c, dict) and c.get("libelle")],
+            "experience": item.get("experienceLibelle") or item.get("experienceExige", ""),
             "url": item.get("origineOffre", {}).get("urlOrigine", "") or f"https://candidat.francetravail.fr/offres/recherche/detail/{item.get('id','')}",
         })
     return {"codeRome": code_rome.upper().strip(), "offres": offers}
