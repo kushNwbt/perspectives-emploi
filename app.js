@@ -172,7 +172,7 @@ async function renderOffers(){
   target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
   list.innerHTML='<div class="rome-loading">Recherche des offres France Travail…</div>';
   try{
-    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code));
+    const commune=(document.getElementById("offersCommune").value||"").trim();\n    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):""));
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier.</div>';return}
@@ -303,3 +303,6 @@ document.getElementById("newSessionBtn").addEventListener("click",()=>{
   const jobInput=document.getElementById("jobInput");if(jobInput)jobInput.value="";
   openHome();window.scrollTo({top:0,behavior:"smooth"});
 });
+
+document.getElementById("offersSearch").addEventListener("click",renderOffers);
+document.getElementById("offersCommune").addEventListener("keydown",e=>{if(e.key==="Enter")renderOffers()});
