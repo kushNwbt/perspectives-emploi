@@ -121,7 +121,7 @@ async def france_travail_token() -> str:
         "grant_type": "client_credentials",
         "client_id": client_id,
         "client_secret": client_secret,
-        "scope": "nomenclatureRome api_rome-metiersv1 api_rome-competencesv1",
+        "scope": "nomenclatureRome api_rome-metiersv1 api_rome-competencesv1 api_rome-fiches-metiersv1",
     }
     async with httpx.AsyncClient(timeout=15) as client:
         response = await client.post(url, data=data)
@@ -211,42 +211,61 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
 
     token = await france_travail_token()
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
-    urls = [
-        "https://api.francetravail.io/partenaire/rome-competences/v1/competences/metier",
-        "https://api.francetravail.io/partenaire/rome-competences/v1/competences",
-    ]
+    url = f"https://api.francetravail.io/partenaire/rome-fiches-metiers/v1/fiches-rome/fiche-metier/{code_rome}"
+    params = {
+        "champs": (
+            "code,"
+            "groupescompetencesmobilisees(competences(libelle,code),enjeu(libelle,code)),"
+            "groupessavoirs(savoirs(libelle,code),categoriesavoirs(libelle,code)),"
+            "metier(libelle,code)"
+        )
+    }
 
     if FT_CALL_LOCK is None:
         FT_CALL_LOCK = asyncio.Lock()
 
     async with FT_CALL_LOCK:
+        wait = 1.10 - (time.monotonic() - FT_LAST_CALL)
+        if wait > 0:
+            await asyncio.sleep(wait)
         async with httpx.AsyncClient(timeout=15) as client:
-            response = None
-            for url in urls:
-                for params in ({"codeRome": code_rome}, {"code_rome": code_rome}, {"code": code_rome}):
-                    wait = 1.10 - (time.monotonic() - FT_LAST_CALL)
-                    if wait > 0:
-                        await asyncio.sleep(wait)
-                    response = await client.get(url, params=params, headers=headers)
-                    FT_LAST_CALL = time.monotonic()
+            response = await client.get(url, params=params, headers=headers)
+        FT_LAST_CALL = time.monotonic()
 
-                    if response.status_code < 400:
-                        items = normalize_rome_competences(response.json())
-                        if items:
-                            data = {"codeRome": code_rome, "competences": items}
-                            ROME_COMP_CACHE[code_rome] = {
-                                "data": data,
-                                "expires_at": time.time() + 21600,
-                            }
-                            return data
+    if response.status_code == 429:
+        raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
+    if response.status_code == 404:
+        raise HTTPException(404, "Fiche métier ROME introuvable.")
+    if response.status_code >= 400:
+        raise HTTPException(502, "La fiche métier ROME est momentanément indisponible.")
 
-                    if response.status_code == 429:
-                        retry_after = response.headers.get("Retry-After")
-                        if retry_after:
-                            try:
-                                await asyncio.sleep(min(float(retry_after), 5.0))
-                            except ValueError:
-                                pass
-                        raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
+    payload = response.json()
+    items, seen = [], set()
 
-    raise HTTPException(502, "Les compétences ROME sont momentanément indisponibles.")
+    for group in payload.get("groupesCompetencesMobilisees", []) or []:
+        enjeu = group.get("enjeu") or {}
+        category = enjeu.get("libelle") or "Compétence ROME"
+        for item in group.get("competences", []) or []:
+            label = str(item.get("libelle") or "").strip()
+            code = str(item.get("code") or "").strip()
+            if label and label.lower() not in seen:
+                seen.add(label.lower())
+                items.append({"code": code, "libelle": label, "categorie": category})
+
+    for group in payload.get("groupesSavoirs", []) or []:
+        category_info = group.get("categorieSavoirs") or {}
+        category = category_info.get("libelle") or "Savoir"
+        for item in group.get("savoirs", []) or []:
+            label = str(item.get("libelle") or "").strip()
+            code = str(item.get("code") or "").strip()
+            if label and label.lower() not in seen:
+                seen.add(label.lower())
+                items.append({"code": code, "libelle": label, "categorie": category})
+
+    data = {
+        "codeRome": code_rome,
+        "metier": payload.get("metier") or {"code": code_rome},
+        "competences": items[:80],
+    }
+    ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}
+    return data
