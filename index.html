@@ -61,7 +61,7 @@
     <div id="skillsEmpty" class="diag-empty"></div>
     <div id="skillsContent" hidden>
       <div id="skillsTarget" class="skills-target"></div>
-      <div class="skills-legend"><span class="skill-ok">✓ Identifiée dans le CV</span><span class="skill-mid">△ À préciser dans le CV</span><span class="skill-check">? À vérifier avec le candidat</span></div>
+      <div id="skillsLegend" class="skills-legend"><button type="button" data-skill-filter="check" class="skill-ok">✓ Identifiée <b id="skillCountCheck">0</b></button><button type="button" data-skill-filter="mid" class="skill-mid">△ À préciser <b id="skillCountMid">0</b></button><button type="button" data-skill-filter="ask" class="skill-check">? À vérifier <b id="skillCountAsk">0</b></button><button type="button" data-skill-filter="all" class="skill-all active">Toutes <b id="skillCountAll">0</b></button></div>
       <div id="skillsList" class="skills-list"></div>
     </div>
   </section>
