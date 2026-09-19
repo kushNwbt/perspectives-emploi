@@ -3,9 +3,11 @@ import os
 import re
 from typing import Dict, List
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import httpx
+import time
 
 app = FastAPI(title="Perspectives Emploi API", version="0.1.0")
 
@@ -98,3 +100,75 @@ async def cv_analyse(cv: UploadFile = File(...)):
     if len(text.strip()) < 40:
         raise HTTPException(422, "Le document ne contient pas assez de texte exploitable.")
     return analyse_cv(text)
+
+
+FT_TOKEN_CACHE = {"token": None, "expires_at": 0}
+
+async def france_travail_token() -> str:
+    client_id = os.getenv("FRANCE_TRAVAIL_CLIENT_ID", "").strip()
+    client_secret = os.getenv("FRANCE_TRAVAIL_CLIENT_SECRET", "").strip()
+    if not client_id or not client_secret:
+        raise HTTPException(503, "Les identifiants France Travail ne sont pas configurés sur le serveur.")
+    now = time.time()
+    if FT_TOKEN_CACHE["token"] and FT_TOKEN_CACHE["expires_at"] > now + 60:
+        return FT_TOKEN_CACHE["token"]
+    url = "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=/partenaire"
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "scope": "nomenclatureRome api_rome-metiersv1",
+    }
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.post(url, data=data)
+    if response.status_code >= 400:
+        raise HTTPException(502, "Connexion à France Travail impossible.")
+    payload = response.json()
+    token = payload.get("access_token")
+    if not token:
+        raise HTTPException(502, "France Travail n’a pas retourné de jeton d’accès.")
+    FT_TOKEN_CACHE["token"] = token
+    FT_TOKEN_CACHE["expires_at"] = now + int(payload.get("expires_in", 1200))
+    return token
+
+def normalize_rome_jobs(payload):
+    source = payload
+    if isinstance(payload, dict):
+        for key in ("resultats", "results", "metiers", "items"):
+            if isinstance(payload.get(key), list):
+                source = payload[key]
+                break
+    if not isinstance(source, list):
+        return []
+    out, seen = [], set()
+    for item in source:
+        if not isinstance(item, dict):
+            continue
+        code = item.get("code") or item.get("codeRome") or item.get("code_rome") or ""
+        label = item.get("libelle") or item.get("libelleMetier") or item.get("label") or item.get("intitule") or ""
+        if isinstance(item.get("metier"), dict):
+            code = code or item["metier"].get("code", "")
+            label = label or item["metier"].get("libelle", "")
+        code, label = str(code).strip(), str(label).strip()
+        key = (code, label.lower())
+        if label and key not in seen:
+            seen.add(key)
+            out.append({"code": code, "libelle": label})
+    return out[:20]
+
+@app.get("/api/rome/metiers")
+async def rome_metiers(q: str = Query(..., min_length=2, max_length=100)):
+    token = await france_travail_token()
+    url = "https://api.francetravail.io/partenaire/rome-metiers/v1/metiers/metier/requete"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    # L'API ROME accepte une requête métier ; on garde l'appel côté serveur pour ne jamais exposer le secret.
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.get(url, params={"q": q}, headers=headers)
+        if response.status_code in (400, 404, 422):
+            # Compatibilité avec les variantes de paramètre de recherche exposées par le service.
+            response = await client.get(url, params={"libelle": q}, headers=headers)
+    if response.status_code == 429:
+        raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
+    if response.status_code >= 400:
+        raise HTTPException(502, "La recherche ROME est momentanément indisponible.")
+    return normalize_rome_jobs(response.json())
