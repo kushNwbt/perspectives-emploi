@@ -96,20 +96,28 @@ document.addEventListener("click",e=>{if(!e.target.closest(".rome-wrap"))romeRes
 try{const saved=JSON.parse(sessionStorage.getItem("perspectives_target_job"));if(saved){romeSearch.value=saved.libelle||"";renderRomeSelected(saved)}}catch(e){}
 
 const skillsView=document.getElementById("skillsView");
-function renderSkills(){
+async function renderSkills(){
   const empty=document.getElementById("skillsEmpty"),content=document.getElementById("skillsContent"),list=document.getElementById("skillsList"),target=document.getElementById("skillsTarget");
   let job=null,cv=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}
   if(!cv){empty.hidden=false;content.hidden=true;empty.textContent="Importez d’abord un CV pour analyser les compétences.";return}
   if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Aucun métier visé sélectionné. Choisissez un métier ROME depuis l’accueil pour lancer la comparaison.";return}
   empty.hidden=true;content.hidden=false;target.innerHTML='<span>Métier comparé</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
-  const detected=Object.entries(cv.sections||{}).filter(x=>x[1]).map(x=>x[0]);
-  const rows=[
-    ["Expériences professionnelles",detected.includes("Expériences")?"ok":"check","Les expériences sont "+(detected.includes("Expériences")?"repérées dans le CV.":"à vérifier avec le candidat.")],
-    ["Compétences explicites",detected.includes("Compétences")?"ok":"mid",detected.includes("Compétences")?"Une rubrique compétences est identifiée.":"Les savoir-faire doivent être davantage explicités dans le CV."],
-    ["Formation et certifications",detected.includes("Formation")?"ok":"check",detected.includes("Formation")?"La formation est identifiable dans le CV.":"Les formations et certifications sont à vérifier."],
-    ["Coordonnées et contact",detected.includes("Coordonnées")?"ok":"mid",detected.includes("Coordonnées")?"Les coordonnées sont repérées.":"Les coordonnées doivent être rendues plus visibles."]
-  ];
-  list.innerHTML=rows.map(r=>'<div class="skill-row"><span class="skill-state '+r[1]+'">'+(r[1]=="ok"?"✓":r[1]=="mid"?"△":"?")+'</span><div><strong>'+r[0]+'</strong><p>'+r[2]+'</p></div></div>').join("");
+  list.innerHTML='<div class="rome-loading">Chargement des compétences officielles ROME…</div>';
+  try{
+    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/rome/competences?code_rome="+encodeURIComponent(job.code));
+    if(!r.ok)throw new Error();
+    const data=await r.json(),items=data.competences||[];
+    if(!items.length){list.innerHTML='<div class="rome-loading">Aucune compétence ROME disponible pour ce métier.</div>';return}
+    const hasSkills=!!(cv.sections||{})["Compétences"];
+    list.innerHTML=items.map((item,i)=>{
+      const state=hasSkills?"check":"mid";
+      const symbol=state=="mid"?"△":"?";
+      const note=hasSkills?"Référentiel ROME : à vérifier avec le candidat et à rapprocher des éléments réellement présents dans son CV.":"Compétence attendue par le métier : à préciser dans le CV si elle est réellement maîtrisée.";
+      return '<div class="skill-row"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+esc(note)+'</p></div></div>';
+    }).join("");
+  }catch(e){
+    list.innerHTML='<div class="rome-loading">Les compétences ROME sont momentanément indisponibles. Réessayez dans quelques instants.</div>';
+  }
 }
 function openSkillsView(){
   homeSections.forEach(x=>x.hidden=true);cvDiagnostic.hidden=true;skillsView.hidden=false;renderSkills();window.scrollTo({top:0,behavior:"smooth"});
