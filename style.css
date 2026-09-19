@@ -36,3 +36,5 @@
 .comparison-toolbar{display:flex;justify-content:flex-end;margin:0 0 14px}.comparison-toolbar button{border:0;border-radius:9px;background:#283276;color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}
 
 #comparisonEmpty button{margin-top:10px;border:0;border-radius:9px;background:#283276;color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}
+
+.comparison-toolbar{gap:8px;flex-wrap:wrap}.comparison-toolbar .comparison-secondary{background:#fff;color:#283276;border:1px solid #cfd4e6}
