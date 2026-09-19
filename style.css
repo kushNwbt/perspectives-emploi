@@ -8,3 +8,5 @@
 .skills-legend button{border:0;cursor:pointer;font:inherit}.skills-legend button b{margin-left:5px}.skills-legend button.active{outline:2px solid #283276;outline-offset:2px}.skill-all{background:#eef0f7;color:#283276;padding:8px 12px;border-radius:10px;font-weight:700}
 
 .offer-row{display:flex;align-items:center;justify-content:space-between;gap:18px}.offer-row>a{white-space:nowrap;text-decoration:none;color:#283276;font-weight:700;border:1px solid #d7dcef;border-radius:10px;padding:9px 12px}.offer-row>a:hover{background:#f2f4ff}
+
+.offer-actions{display:flex;align-items:center;gap:9px}.offer-actions>a{white-space:nowrap;text-decoration:none;color:#283276;font-weight:700;border:1px solid #d7dcef;border-radius:10px;padding:9px 12px}.compare-offer{white-space:nowrap;border:1px solid #d7dcef;background:#fff;color:#283276;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}.compare-offer.selected{background:#e8f7ef;border-color:#b9e4cb;color:#17683b}@media(max-width:760px){.offer-row{align-items:flex-start;flex-direction:column}.offer-actions{width:100%;flex-wrap:wrap}}
