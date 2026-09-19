@@ -166,13 +166,17 @@ document.getElementById("skillsBackHome").addEventListener("click",()=>{skillsVi
 const offersView=document.getElementById("offersView");
 async function renderOffers(){
   const empty=document.getElementById("offersEmpty"),content=document.getElementById("offersContent"),list=document.getElementById("offersList"),target=document.getElementById("offersTarget");
+  const communeInput=document.getElementById("offersCommune");
+  if(communeInput&&!communeInput.value) communeInput.value=sessionStorage.getItem("perspectives_offers_commune")||"";
   let job=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
   if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour rechercher des offres.";return}
   empty.hidden=true;content.hidden=false;
   target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
   list.innerHTML='<div class="rome-loading">Recherche des offres France Travail…</div>';
   try{
-    const commune=(document.getElementById("offersCommune").value||"").trim();\n    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):""));
+    const commune=(document.getElementById("offersCommune").value||"").trim();
+    if(commune) sessionStorage.setItem("perspectives_offers_commune",commune); else sessionStorage.removeItem("perspectives_offers_commune");
+    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):""));
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier.</div>';return}
@@ -298,7 +302,7 @@ document.getElementById("planBackHome").addEventListener("click",openHome);
 document.getElementById("newSessionBtn").addEventListener("click",()=>{
   const hasData=sessionStorage.getItem("perspectives_cv_analysis")||sessionStorage.getItem("perspectives_target_job")||sessionStorage.getItem("perspectives_compare_offers");
   if(hasData&&!window.confirm("Démarrer une nouvelle analyse ? Le CV, le métier et les offres sélectionnées de cette session seront retirés."))return;
-  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers"].forEach(k=>sessionStorage.removeItem(k));
+  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers","perspectives_offers_commune"].forEach(k=>sessionStorage.removeItem(k));
   if(typeof selectedJob!=="undefined") selectedJob=null;
   const jobInput=document.getElementById("jobInput");if(jobInput)jobInput.value="";
   openHome();window.scrollTo({top:0,behavior:"smooth"});
