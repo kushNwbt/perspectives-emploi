@@ -195,6 +195,8 @@ async function renderOffers(){
       current=exists?current.filter(x=>String(x.id)!==String(offer.id)):[...current,offer];
       sessionStorage.setItem("perspectives_compare_offers",JSON.stringify(current));
       btn.classList.toggle("selected",!exists);btn.textContent=!exists?"✓ Ajoutée":"＋ Comparer";
+      const selectionSummary=document.getElementById("offersSelectionSummary");
+      if(current.length){selectionSummary.hidden=false;selectionSummary.innerHTML='<strong>'+current.length+' offre'+(current.length>1?'s':'')+' sélectionnée'+(current.length>1?'s':'')+'</strong> pour comparaison <button id="offersGoComparison" type="button">Voir la comparaison →</button>';document.getElementById("offersGoComparison").addEventListener("click",openComparisonView)}else{selectionSummary.hidden=true;selectionSummary.innerHTML=""}
     });
   }catch(e){list.innerHTML='<div class="rome-loading">Les offres France Travail sont momentanément indisponibles.</div>'}
 }
