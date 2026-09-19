@@ -208,7 +208,7 @@ function renderComparison(){
   let offers=[],cv=null;
   try{offers=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]")}catch(e){}
   try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}
-  if(!offers.length){empty.hidden=false;content.hidden=true;empty.textContent="Sélectionnez au moins une offre depuis le module Offres avec le bouton « ＋ Comparer ».";return}
+  if(!offers.length){empty.hidden=false;content.hidden=true;empty.innerHTML='<p>Sélectionnez au moins une offre depuis le module Offres avec le bouton « ＋ Comparer ».</p><button id="comparisonEmptyOffers" type="button">Rechercher des offres →</button>';document.getElementById("comparisonEmptyOffers").addEventListener("click",openOffersView);return}
   empty.hidden=true;content.hidden=false;
   const evidence=(cv&&cv.competences_cv)||[];
   content.innerHTML=offers.map(o=>{
