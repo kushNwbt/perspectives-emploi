@@ -161,7 +161,7 @@ async def france_travail_token() -> str:
         "grant_type": "client_credentials",
         "client_id": client_id,
         "client_secret": client_secret,
-        "scope": "nomenclatureRome api_rome-metiersv1 api_rome-competencesv1 api_rome-fiches-metiersv1",
+        "scope": "nomenclatureRome api_rome-metiersv1 api_rome-competencesv1 api_rome-fiches-metiersv1 o2dsoffre api_offresdemploiv2",
     }
     async with httpx.AsyncClient(timeout=15) as client:
         response = await client.post(url, data=data)
@@ -309,3 +309,34 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
     }
     ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}
     return data
+
+
+@app.get("/api/offres")
+async def offres_emploi(code_rome: str = Query(..., min_length=5, max_length=5), commune: str = Query("", max_length=100)):
+    token = await france_travail_token()
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    params = {"codeROME": code_rome.upper().strip(), "range": "0-19"}
+    if commune.strip():
+        params["commune"] = commune.strip()
+    url = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.get(url, params=params, headers=headers)
+    if response.status_code == 429:
+        raise HTTPException(429, "Le service Offres d’emploi est momentanément très sollicité.")
+    if response.status_code >= 400:
+        raise HTTPException(502, "Les offres France Travail sont momentanément indisponibles.")
+    payload = response.json()
+    results = payload.get("resultats", []) if isinstance(payload, dict) else []
+    offers = []
+    for item in results[:20]:
+        lieu = item.get("lieuTravail") or {}
+        entreprise = item.get("entreprise") or {}
+        offers.append({
+            "id": item.get("id", ""),
+            "intitule": item.get("intitule", ""),
+            "entreprise": entreprise.get("nom", ""),
+            "lieu": lieu.get("libelle", ""),
+            "typeContrat": item.get("typeContratLibelle") or item.get("typeContrat", ""),
+            "url": item.get("origineOffre", {}).get("urlOrigine", "") or f"https://candidat.francetravail.fr/offres/recherche/detail/{item.get('id','')}",
+        })
+    return {"codeRome": code_rome.upper().strip(), "offres": offers}
