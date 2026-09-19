@@ -46,6 +46,28 @@ def has_any(text: str, words: List[str]) -> bool:
     t = text.lower()
     return any(w.lower() in t for w in words)
 
+def extract_cv_skill_evidence(text: str) -> List[str]:
+    """Extrait uniquement des formulations courtes réellement présentes dans le CV."""
+    lines = [re.sub(r"\\s+", " ", line).strip(" •·▪-–—\\t") for line in text.splitlines()]
+    lines = [line for line in lines if 3 <= len(line) <= 120]
+    section_words = ("compétence", "competence", "savoir-faire", "skills")
+    collected = []
+    in_skills = False
+    for line in lines:
+        low = line.lower().rstrip(":")
+        if any(word in low for word in section_words):
+            in_skills = True
+            continue
+        if in_skills and re.match(r"^(expérience|experience|formation|diplôme|diplome|langue|centre d.?intérêt|profil|coordonnée)", low):
+            in_skills = False
+        if in_skills:
+            for part in re.split(r"[;,|•]", line):
+                item = part.strip()
+                if 3 <= len(item) <= 90 and item.lower() not in {x.lower() for x in collected}:
+                    collected.append(item)
+    return collected[:80]
+
+
 def analyse_cv(text: str) -> Dict:
     compact = re.sub(r"\s+", " ", text).strip()
     sections = {
@@ -76,7 +98,8 @@ def analyse_cv(text: str) -> Dict:
         "sections": sections,
         "priorites": priorities[:3],
         "meta": {"caracteres": len(text), "mots": len(text.split())},
-        "avertissement": "Diagnostic pédagogique fondé sur les éléments détectés dans le CV. Il ne garantit pas le passage d’un ATS ni un recrutement."
+        "avertissement": "Diagnostic pédagogique fondé sur les éléments détectés dans le CV. Il ne garantit pas le passage d’un ATS ni un recrutement.",
+        "competences_cv": extract_cv_skill_evidence(text)
     }
 
 @app.get("/health")
