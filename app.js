@@ -176,7 +176,17 @@ async function renderOffers(){
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier.</div>';return}
-    list.innerHTML=items.map(o=>'<div class="skill-row offer-row"><div><strong>'+esc(o.intitule)+'</strong><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><a href="'+esc(o.url)+'" target="_blank" rel="noopener">Voir l’offre →</a></div>').join("");
+    const saved=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");
+    const selected=new Set(saved.map(x=>x.id));
+    list.innerHTML=items.map(o=>'<div class="skill-row offer-row"><div><strong>'+esc(o.intitule)+'</strong><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><div class="offer-actions"><button type="button" class="compare-offer '+(selected.has(o.id)?'selected':'')+'" data-offer-id="'+esc(o.id)+'">'+(selected.has(o.id)?'✓ Ajoutée':'＋ Comparer')+'</button><a href="'+esc(o.url)+'" target="_blank" rel="noopener">Voir l’offre →</a></div></div>').join("");
+    document.querySelectorAll(".compare-offer").forEach(btn=>btn.onclick=()=>{
+      const offer=items.find(x=>String(x.id)===btn.dataset.offerId); if(!offer)return;
+      let current=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");
+      const exists=current.some(x=>String(x.id)===String(offer.id));
+      current=exists?current.filter(x=>String(x.id)!==String(offer.id)):[...current,offer];
+      sessionStorage.setItem("perspectives_compare_offers",JSON.stringify(current));
+      btn.classList.toggle("selected",!exists);btn.textContent=!exists?"✓ Ajoutée":"＋ Comparer";
+    });
   }catch(e){list.innerHTML='<div class="rome-loading">Les offres France Travail sont momentanément indisponibles.</div>'}
 }
 function openOffersView(){
