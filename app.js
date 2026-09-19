@@ -159,3 +159,27 @@ function openSkillsView(){
 }
 document.querySelectorAll('[data-view="skills"],.sidebar a[href="#competences"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openSkillsView()}));
 document.getElementById("skillsBackHome").addEventListener("click",()=>{skillsView.hidden=true;openHome()});
+
+
+const offersView=document.getElementById("offersView");
+async function renderOffers(){
+  const empty=document.getElementById("offersEmpty"),content=document.getElementById("offersContent"),list=document.getElementById("offersList"),target=document.getElementById("offersTarget");
+  let job=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
+  if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour rechercher des offres.";return}
+  empty.hidden=true;content.hidden=false;
+  target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
+  list.innerHTML='<div class="rome-loading">Recherche des offres France Travail…</div>';
+  try{
+    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code));
+    if(!r.ok)throw new Error();
+    const data=await r.json(),items=data.offres||[];
+    if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier.</div>';return}
+    list.innerHTML=items.map(o=>'<div class="skill-row offer-row"><div><strong>'+esc(o.intitule)+'</strong><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><a href="'+esc(o.url)+'" target="_blank" rel="noopener">Voir l’offre →</a></div>').join("");
+  }catch(e){list.innerHTML='<div class="rome-loading">Les offres France Travail sont momentanément indisponibles.</div>'}
+}
+function openOffersView(){
+  homeSections.forEach(x=>x.hidden=true);cvDiagnostic.hidden=true;skillsView.hidden=true;offersView.hidden=false;renderOffers();window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#offres"]');if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="offers"],.sidebar a[href="#offres"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openOffersView()}));
+document.getElementById("offersBackHome").addEventListener("click",()=>{offersView.hidden=true;openHome()});
