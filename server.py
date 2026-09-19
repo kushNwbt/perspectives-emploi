@@ -202,23 +202,51 @@ def normalize_rome_competences(payload):
 
 @app.get("/api/rome/competences")
 async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=5)):
+    global FT_LAST_CALL, FT_CALL_LOCK
+    code_rome = code_rome.upper().strip()
+
+    cached = ROME_COMP_CACHE.get(code_rome)
+    if cached and cached["expires_at"] > time.time():
+        return cached["data"]
+
     token = await france_travail_token()
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     urls = [
         "https://api.francetravail.io/partenaire/rome-competences/v1/competences/metier",
         "https://api.francetravail.io/partenaire/rome-competences/v1/competences",
     ]
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = None
-        for url in urls:
-            for params in ({"codeRome": code_rome}, {"code_rome": code_rome}, {"code": code_rome}):
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code < 400:
-                    items = normalize_rome_competences(response.json())
-                    if items:
-                        data = {"codeRome": code_rome, "competences": items}
-                        ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}
-                        return data
-                if response.status_code == 429:
-                    raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
+
+    if FT_CALL_LOCK is None:
+        FT_CALL_LOCK = asyncio.Lock()
+
+    async with FT_CALL_LOCK:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = None
+            for url in urls:
+                for params in ({"codeRome": code_rome}, {"code_rome": code_rome}, {"code": code_rome}):
+                    wait = 1.10 - (time.monotonic() - FT_LAST_CALL)
+                    if wait > 0:
+                        await asyncio.sleep(wait)
+                    response = await client.get(url, params=params, headers=headers)
+                    FT_LAST_CALL = time.monotonic()
+
+                    if response.status_code < 400:
+                        items = normalize_rome_competences(response.json())
+                        if items:
+                            data = {"codeRome": code_rome, "competences": items}
+                            ROME_COMP_CACHE[code_rome] = {
+                                "data": data,
+                                "expires_at": time.time() + 21600,
+                            }
+                            return data
+
+                    if response.status_code == 429:
+                        retry_after = response.headers.get("Retry-After")
+                        if retry_after:
+                            try:
+                                await asyncio.sleep(min(float(retry_after), 5.0))
+                            except ValueError:
+                                pass
+                        raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
+
     raise HTTPException(502, "Les compétences ROME sont momentanément indisponibles.")
