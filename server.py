@@ -7,7 +7,8 @@ from fastapi import FastAPI, File, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
-import time\nimport asyncio
+import time
+import asyncio
 
 app = FastAPI(title="Perspectives Emploi API", version="0.1.0")
 
@@ -102,7 +103,10 @@ async def cv_analyse(cv: UploadFile = File(...)):
     return analyse_cv(text)
 
 
-FT_TOKEN_CACHE = {"token": None, "expires_at": 0}\nFT_LAST_CALL = 0.0\nFT_CALL_LOCK = None\nROME_COMP_CACHE = {}
+FT_TOKEN_CACHE = {"token": None, "expires_at": 0}
+FT_LAST_CALL = 0.0
+FT_CALL_LOCK = None
+ROME_COMP_CACHE = {}
 
 async def france_travail_token() -> str:
     client_id = os.getenv("FRANCE_TRAVAIL_CLIENT_ID", "").strip()
@@ -212,7 +216,9 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
                 if response.status_code < 400:
                     items = normalize_rome_competences(response.json())
                     if items:
-                        data = {"codeRome": code_rome, "competences": items}\n                        ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}\n                        return data
+                        data = {"codeRome": code_rome, "competences": items}
+                        ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}
+                        return data
                 if response.status_code == 429:
                     raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
     raise HTTPException(502, "Les compétences ROME sont momentanément indisponibles.")
