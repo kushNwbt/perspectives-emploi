@@ -324,3 +324,5 @@ function syncOffersClear(){offersClearCommune.hidden=!offersCommuneInput.value.t
 offersCommuneInput.addEventListener("input",syncOffersClear);
 offersClearCommune.addEventListener("click",()=>{offersCommuneInput.value="";sessionStorage.removeItem("perspectives_offers_commune");syncOffersClear();renderOffers()});
 syncOffersClear();
+
+document.getElementById("comparisonAddOffers").addEventListener("click",openOffersView);
