@@ -277,7 +277,15 @@ function renderPlan(){
     {done:!!job,title:"Compétences",text:job?"Consulter les compétences du métier et préciser les éléments à vérifier.":"Le métier ROME est nécessaire pour préparer cette étape."},
     {done:false,title:"Prochaine action",text:offers.length?"Ouvrir CV ↔ Offre pour préparer les points à valoriser et à préciser avec le candidat.":job?"Explorer les offres correspondant au métier ciblé.":"Commencer par préciser le métier recherché."}
   ];
-  box.innerHTML=steps.map((s,i)=>'<article class="plan-step '+(s.done?"done":"")+'"><span class="plan-number">'+(s.done?"✓":i+1)+'</span><div><h3>'+s.title+'</h3><p>'+s.text+'</p></div></article>').join("");
+  const actions=["cv","skills","offers","skills","next"];
+  box.innerHTML=steps.map((s,i)=>'<article class="plan-step '+(s.done?"done":"")+'"><span class="plan-number">'+(s.done?"✓":i+1)+'</span><div><h3>'+s.title+'</h3><p>'+s.text+'</p><button class="plan-action" data-plan-action="'+actions[i]+'" type="button">'+(s.done?"Revoir cette étape →":"Ouvrir cette étape →")+'</button></div></article>').join("");
+  box.querySelectorAll(".plan-action").forEach(btn=>btn.addEventListener("click",()=>{
+    const a=btn.dataset.planAction;
+    if(a==="cv"){openCvDiagnostic();return}
+    if(a==="skills"){openSkillsView();return}
+    if(a==="offers"){openOffersView();return}
+    if(a==="next"){if(offers.length){openComparisonView()}else if(job){openOffersView()}else{openHome()}}
+  }));
 }
 function openPlanView(){
   homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);planView.hidden=false;renderPlan();window.scrollTo({top:0,behavior:"smooth"});
