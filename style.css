@@ -38,3 +38,5 @@
 #comparisonEmpty button{margin-top:10px;border:0;border-radius:9px;background:#283276;color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}
 
 .comparison-toolbar{gap:8px;flex-wrap:wrap}.comparison-toolbar .comparison-secondary{background:#fff;color:#283276;border:1px solid #cfd4e6}
+
+.offers-selection-summary{margin:0 0 14px;padding:11px 13px;border:1px solid #d7dcef;border-radius:10px;background:#f7f8fc;color:#283276}.offers-selection-summary button{margin-left:8px;border:0;background:transparent;color:#008ecf;font-weight:700;cursor:pointer}

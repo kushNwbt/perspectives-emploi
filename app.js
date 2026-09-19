@@ -166,6 +166,10 @@ document.getElementById("skillsBackHome").addEventListener("click",()=>{skillsVi
 
 const offersView=document.getElementById("offersView");
 async function renderOffers(){
+  const selectionSummary=document.getElementById("offersSelectionSummary");
+  const selectedOffers=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");
+  if(selectedOffers.length){selectionSummary.hidden=false;selectionSummary.innerHTML='<strong>'+selectedOffers.length+' offre'+(selectedOffers.length>1?'s':'')+' sélectionnée'+(selectedOffers.length>1?'s':'')+'</strong> pour comparaison <button id="offersGoComparison" type="button">Voir la comparaison →</button>';document.getElementById("offersGoComparison").addEventListener("click",openComparisonView)}else{selectionSummary.hidden=true;selectionSummary.innerHTML=""}
+
   const empty=document.getElementById("offersEmpty"),content=document.getElementById("offersContent"),list=document.getElementById("offersList"),target=document.getElementById("offersTarget");
   const communeInput=document.getElementById("offersCommune");
   if(communeInput&&!communeInput.value) communeInput.value=sessionStorage.getItem("perspectives_offers_commune")||"";
