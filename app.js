@@ -327,3 +327,5 @@ offersClearCommune.addEventListener("click",()=>{offersCommuneInput.value="";ses
 syncOffersClear();
 
 document.getElementById("comparisonAddOffers").addEventListener("click",openOffersView);
+
+document.getElementById("comparisonReviewCv").addEventListener("click",openCvDiagnostic);
