@@ -52,8 +52,19 @@
       <article id="offres" class="module-link" data-view="offers"><i>⌕</i><div><h3>Offres d’emploi</h3><p>Explorer les opportunités liées aux métiers sélectionnés.</p></div><b>→</b></article>
       <article id="comparaison" class="module-link" data-view="comparison"><i>⇄</i><div><h3>CV ↔ Offre</h3><p>Comparer une offre avec le CV sans modifier le parcours.</p></div><b>→</b></article>
       <article id="formations" class="module-link" data-view="training"><i>▣</i><div><h3>Formations</h3><p>Identifier des formations en lien avec le projet.</p></div><b>→</b></article>
-      <article id="marche"><i>▥</i><div><h3>Marché du travail</h3><p>Comprendre le métier et son environnement d’emploi.</p></div><b>→</b></article>
+      <article id="marche" class="module-link" data-view="market"><i>▥</i><div><h3>Marché du travail</h3><p>Comprendre le métier et son environnement d’emploi.</p></div><b>→</b></article>
       <article id="plan" class="wide"><i>✓</i><div><h3>Plan d’action</h3><p>Réunir les priorités CV, métiers, compétences et prochaines étapes.</p></div><b>→</b></article>
+    </div>
+  </section>
+  <section id="marketView" class="diagnostic-view" hidden>
+    <div class="diag-head"><div><span class="eyebrow dark">MARCHÉ DU TRAVAIL</span><h2>Explorer le marché du métier</h2><p>Accédez aux informations France Travail liées au métier sélectionné.</p></div><button id="marketBackHome" type="button">← Retour à l’accueil</button></div>
+    <div id="marketEmpty" class="diag-empty"></div>
+    <div id="marketContent" class="market-content" hidden>
+      <div id="marketTarget" class="skills-target"></div>
+      <div class="market-grid">
+        <article class="market-card"><h3>Offres disponibles</h3><strong id="marketOffersCount">—</strong><p>Nombre d’offres actuellement remontées par Perspectives Emploi pour ce métier.</p><button id="marketOpenOffers" type="button">Voir les offres →</button></article>
+        <article class="market-card"><h3>Informations métier</h3><p>Consultez la fiche métier France Travail pour compléter l’analyse du marché et préparer l’échange avec le candidat.</p><a id="marketJobLink" target="_blank" rel="noopener">Explorer sur France Travail →</a></article>
+      </div>
     </div>
   </section>
   <section id="trainingView" class="diagnostic-view" hidden>
