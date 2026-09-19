@@ -47,13 +47,22 @@
   <section class="modules">
     <div class="section-title"><div><span class="step">3</span><h2>Explorer votre parcours</h2></div><p>Chaque module apporte un éclairage complémentaire.</p></div>
     <div class="cards">
-      <article id="cv"><i>▤</i><div><h3>Mon CV</h3><p>Diagnostic pédagogique, priorités et conseils concrets.</p></div><b>→</b></article>
+      <article id="cv" class="module-link" data-view="cv"><i>▤</i><div><h3>Mon CV</h3><p>Diagnostic pédagogique, priorités et conseils concrets.</p></div><b>→</b></article>
       <article id="competences"><i>◇</i><div><h3>Compétences & métiers</h3><p>Compétences identifiées, transférables et métiers proches.</p></div><b>→</b></article>
       <article id="offres"><i>⌕</i><div><h3>Offres d’emploi</h3><p>Explorer les opportunités liées aux métiers sélectionnés.</p></div><b>→</b></article>
       <article id="comparaison"><i>⇄</i><div><h3>CV ↔ Offre</h3><p>Comparer une offre avec le CV sans modifier le parcours.</p></div><b>→</b></article>
       <article id="formations"><i>▣</i><div><h3>Formations</h3><p>Identifier des formations en lien avec le projet.</p></div><b>→</b></article>
       <article id="marche"><i>▥</i><div><h3>Marché du travail</h3><p>Comprendre le métier et son environnement d’emploi.</p></div><b>→</b></article>
       <article id="plan" class="wide"><i>✓</i><div><h3>Plan d’action</h3><p>Réunir les priorités CV, métiers, compétences et prochaines étapes.</p></div><b>→</b></article>
+    </div>
+  </section>
+  <section id="cvDiagnostic" class="diagnostic-view" hidden>
+    <div class="diag-head"><div><span class="eyebrow dark">MON CV</span><h2>Diagnostic de votre CV</h2><p>Une lecture pédagogique pour identifier les points forts et les améliorations prioritaires.</p></div><button id="backHome" type="button">← Retour à l’accueil</button></div>
+    <div id="diagEmpty" class="diag-empty">Importez d’abord un CV depuis l’accueil pour afficher son diagnostic.</div>
+    <div id="diagContent" hidden>
+      <div class="diag-summary"><div id="diagScore" class="score-ring">--<small>/100</small></div><div><span id="diagStatus" class="status-pill"></span><h3>État général du CV</h3><p id="diagDisclaimer"></p></div></div>
+      <h3 class="diag-title">Lecture des rubriques</h3><div id="diagSections" class="diag-grid"></div>
+      <h3 class="diag-title">🎯 Ce que vous devez faire maintenant</h3><div id="diagPriorities" class="priority-list"></div>
     </div>
   </section>
   <section class="notice"><strong>Une aide à l’accompagnement professionnel</strong><p>Les analyses et indicateurs facilitent la lecture d’un profil et la préparation des échanges. Ils ne constituent ni une décision de recrutement, ni une garantie d’accès à une formation.</p></section>
