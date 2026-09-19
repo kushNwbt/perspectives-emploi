@@ -179,7 +179,7 @@ async function renderOffers(){
     const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):""));
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
-    if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier.</div>';return}
+    if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier'+(commune?' dans la zone « '+esc(commune)+' »':'')+'. '+(commune?'Essayez une autre commune ou videz le filtre pour élargir la recherche.':'Vous pouvez réessayer plus tard ou modifier le métier ciblé.')+'</div>';return}
     const saved=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");
     const selected=new Set(saved.map(x=>x.id));
     list.innerHTML=items.map(o=>'<div class="skill-row offer-row"><div><strong>'+esc(o.intitule)+'</strong><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><div class="offer-actions"><button type="button" class="compare-offer '+(selected.has(o.id)?'selected':'')+'" data-offer-id="'+esc(o.id)+'">'+(selected.has(o.id)?'✓ Ajoutée':'＋ Comparer')+'</button><a href="'+esc(o.url)+'" target="_blank" rel="noopener">Voir l’offre →</a></div></div>').join("");
