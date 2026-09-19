@@ -43,7 +43,7 @@ fileInput.addEventListener("change",()=>handleFile(fileInput.files[0]));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag")}));
 drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
 
-const homeSections=[...document.querySelectorAll("main > section:not(#cvDiagnostic):not(#skillsView), main > footer")];
+const homeSections=[...document.querySelectorAll("main > section:not(.diagnostic-view), main > footer")];
 const cvDiagnostic=document.getElementById("cvDiagnostic");
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function renderCvDiagnostic(){
@@ -65,7 +65,7 @@ function openCvView(){
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#cv"]'); if(link)link.classList.add("active");
 }
 function openHome(){
-  cvDiagnostic.hidden=true; homeSections.forEach(x=>x.hidden=false); window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true); homeSections.forEach(x=>x.hidden=false); window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#accueil"]'); if(link)link.classList.add("active");
 }
 document.querySelectorAll('[data-view="cv"],.sidebar a[href="#cv"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openCvView()}));
