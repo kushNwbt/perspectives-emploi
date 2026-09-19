@@ -117,7 +117,7 @@ async def france_travail_token() -> str:
         "grant_type": "client_credentials",
         "client_id": client_id,
         "client_secret": client_secret,
-        "scope": "nomenclatureRome api_rome-metiersv1",
+        "scope": "nomenclatureRome api_rome-metiersv1 api_rome-competencesv1",
     }
     async with httpx.AsyncClient(timeout=15) as client:
         response = await client.post(url, data=data)
@@ -172,3 +172,47 @@ async def rome_metiers(q: str = Query(..., min_length=2, max_length=100)):
     if response.status_code >= 400:
         raise HTTPException(502, "La recherche ROME est momentanément indisponible.")
     return normalize_rome_jobs(response.json())
+
+
+def normalize_rome_competences(payload):
+    source = payload
+    if isinstance(payload, dict):
+        for key in ("competences", "resultats", "results", "items"):
+            if isinstance(payload.get(key), list):
+                source = payload[key]
+                break
+    if not isinstance(source, list):
+        return []
+    out, seen = [], set()
+    for item in source:
+        if not isinstance(item, dict):
+            continue
+        label = item.get("libelle") or item.get("libelleCompetence") or item.get("label") or item.get("intitule") or ""
+        code = item.get("code") or item.get("codeCompetence") or ""
+        category = item.get("type") or item.get("categorie") or item.get("typeCompetence") or "Compétence ROME"
+        label = str(label).strip()
+        if label and label.lower() not in seen:
+            seen.add(label.lower())
+            out.append({"code": str(code).strip(), "libelle": label, "categorie": str(category).strip()})
+    return out[:60]
+
+@app.get("/api/rome/competences")
+async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=5)):
+    token = await france_travail_token()
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    urls = [
+        "https://api.francetravail.io/partenaire/rome-competences/v1/competences/metier",
+        "https://api.francetravail.io/partenaire/rome-competences/v1/competences",
+    ]
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = None
+        for url in urls:
+            for params in ({"codeRome": code_rome}, {"code_rome": code_rome}, {"code": code_rome}):
+                response = await client.get(url, params=params, headers=headers)
+                if response.status_code < 400:
+                    items = normalize_rome_competences(response.json())
+                    if items:
+                        return {"codeRome": code_rome, "competences": items}
+                if response.status_code == 429:
+                    raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
+    raise HTTPException(502, "Les compétences ROME sont momentanément indisponibles.")
