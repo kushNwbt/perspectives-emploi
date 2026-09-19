@@ -192,6 +192,7 @@ async function renderOffers(){
       const offer=items.find(x=>String(x.id)===btn.dataset.offerId); if(!offer)return;
       let current=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");
       const exists=current.some(x=>String(x.id)===String(offer.id));
+      if(!exists&&current.length>=5){alert("Vous pouvez comparer jusqu’à 5 offres à la fois. Retirez une offre de la sélection pour en ajouter une autre.");return}
       current=exists?current.filter(x=>String(x.id)!==String(offer.id)):[...current,offer];
       sessionStorage.setItem("perspectives_compare_offers",JSON.stringify(current));
       btn.classList.toggle("selected",!exists);btn.textContent=!exists?"✓ Ajoutée":"＋ Comparer";
