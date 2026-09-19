@@ -244,3 +244,21 @@ function openTrainingView(){
 }
 document.querySelectorAll('[data-view="training"],.sidebar a[href="#formations"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openTrainingView()}));
 document.getElementById("trainingBackHome").addEventListener("click",openHome);
+
+
+const marketView=document.getElementById("marketView");
+async function renderMarket(){
+  const empty=document.getElementById("marketEmpty"),content=document.getElementById("marketContent"),target=document.getElementById("marketTarget"),count=document.getElementById("marketOffersCount"),link=document.getElementById("marketJobLink");
+  let job=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
+  if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour explorer son marché du travail.";return}
+  empty.hidden=true;content.hidden=false;target.innerHTML='<span>Métier analysé</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';count.textContent="…";
+  link.href="https://www.francetravail.fr/candidat/recherche-emploi.html?motsCles="+encodeURIComponent(job.libelle);
+  try{const r=await fetch(API_BASE+"/api/offres?code_rome="+encodeURIComponent(job.code));if(!r.ok)throw new Error();const data=await r.json();const offers=Array.isArray(data)?data:(data.offres||[]);count.textContent=offers.length;}catch(e){count.textContent="Indisponible";}
+}
+function openMarketView(){
+  homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);marketView.hidden=false;renderMarket();window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#marche"]');if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="market"],.sidebar a[href="#marche"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openMarketView()}));
+document.getElementById("marketBackHome").addEventListener("click",openHome);
+document.getElementById("marketOpenOffers").addEventListener("click",openOffersView);
