@@ -293,3 +293,13 @@ function openPlanView(){
 }
 document.querySelectorAll('[data-view="plan"],.sidebar a[href="#plan"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openPlanView()}));
 document.getElementById("planBackHome").addEventListener("click",openHome);
+
+
+document.getElementById("newSessionBtn").addEventListener("click",()=>{
+  const hasData=sessionStorage.getItem("perspectives_cv_analysis")||sessionStorage.getItem("perspectives_target_job")||sessionStorage.getItem("perspectives_compare_offers");
+  if(hasData&&!window.confirm("Démarrer une nouvelle analyse ? Le CV, le métier et les offres sélectionnées de cette session seront retirés."))return;
+  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers"].forEach(k=>sessionStorage.removeItem(k));
+  if(typeof selectedJob!=="undefined") selectedJob=null;
+  const jobInput=document.getElementById("jobInput");if(jobInput)jobInput.value="";
+  openHome();window.scrollTo({top:0,behavior:"smooth"});
+});
