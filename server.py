@@ -47,25 +47,42 @@ def has_any(text: str, words: List[str]) -> bool:
     return any(w.lower() in t for w in words)
 
 def extract_cv_skill_evidence(text: str) -> List[str]:
-    """Extrait uniquement des formulations courtes réellement présentes dans le CV."""
+    """Conserve des indices courts réellement présents dans le CV, sans renvoyer le texte brut."""
     lines = [re.sub(r"\\s+", " ", line).strip(" •·▪-–—\\t") for line in text.splitlines()]
-    lines = [line for line in lines if 3 <= len(line) <= 120]
+    lines = [line for line in lines if 3 <= len(line) <= 140]
     section_words = ("compétence", "competence", "savoir-faire", "skills")
+    stop_words = ("formation", "diplôme", "diplome", "langue", "centre d'intérêt", "profil", "coordonnée")
+    action_words = (
+        "accompagn", "accueill", "orient", "conseill", "anim", "organis", "coordonn",
+        "recrut", "prospect", "analys", "évalu", "evalu", "gér", "ger", "suiv",
+        "inform", "renseign", "développ", "developp", "pilot", "prépar", "prepar",
+        "condu", "réalis", "realis", "cré", "cre", "mettr", "assur"
+    )
     collected = []
     in_skills = False
+
+    def add_item(value: str):
+        item = value.strip(" •·▪-–—\\t")
+        if 3 <= len(item) <= 110 and item.lower() not in {x.lower() for x in collected}:
+            collected.append(item)
+
     for line in lines:
         low = line.lower().rstrip(":")
-        if any(word in low for word in section_words):
+        if any(word in low for word in section_words) and len(line) <= 60:
             in_skills = True
             continue
-        if in_skills and re.match(r"^(expérience|experience|formation|diplôme|diplome|langue|centre d.?intérêt|profil|coordonnée)", low):
+        if in_skills and any(low.startswith(word) for word in stop_words):
             in_skills = False
+
         if in_skills:
             for part in re.split(r"[;,|•]", line):
-                item = part.strip()
-                if 3 <= len(item) <= 90 and item.lower() not in {x.lower() for x in collected}:
-                    collected.append(item)
-    return collected[:80]
+                add_item(part)
+        elif any(stem in low for stem in action_words):
+            # Une mission d'expérience peut constituer un indice de compétence,
+            # même si le CV n'a pas de rubrique explicitement nommée « Compétences ».
+            add_item(line)
+
+    return collected[:120]
 
 
 def analyse_cv(text: str) -> Dict:
