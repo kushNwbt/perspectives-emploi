@@ -28,3 +28,5 @@
 .new-session-btn{margin:14px 16px 0;width:calc(100% - 32px);border:1px solid #d7dcef;background:#fff;color:#283276;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}.new-session-btn:hover{background:#f5f6fb}
 
 .offers-filters{margin:14px 0 18px;background:#fff;border:1px solid #dfe3f2;border-radius:14px;padding:14px}.offers-filters label{display:block;color:#101f67;font-weight:700;margin-bottom:7px}.offers-filters label span{font-weight:400;color:#727a98;font-size:12px}.offers-filters>div{display:flex;gap:8px}.offers-filters input{flex:1;min-width:0;border:1px solid #cfd4e6;border-radius:9px;padding:10px 12px}.offers-filters button{border:0;border-radius:9px;background:#283276;color:#fff;font-weight:700;padding:10px 14px;cursor:pointer}.offers-filters p{margin:7px 0 0;color:#737b98;font-size:12px}@media(max-width:600px){.offers-filters>div{flex-direction:column}}
+
+.offers-filters .secondary-filter-btn{background:#fff;color:#283276;border:1px solid #cfd4e6}.offers-filters .secondary-filter-btn:hover{background:#f5f6fb}
