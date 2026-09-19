@@ -262,3 +262,26 @@ function openMarketView(){
 document.querySelectorAll('[data-view="market"],.sidebar a[href="#marche"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openMarketView()}));
 document.getElementById("marketBackHome").addEventListener("click",openHome);
 document.getElementById("marketOpenOffers").addEventListener("click",openOffersView);
+
+
+const planView=document.getElementById("planView");
+function renderPlan(){
+  const box=document.getElementById("planContent");let job=null,cv=null,offers=[];
+  try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
+  try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}
+  try{offers=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]")}catch(e){}
+  const steps=[
+    {done:!!cv,title:"CV",text:cv?"Diagnostic du CV réalisé.":"Importer un CV et consulter son diagnostic."},
+    {done:!!job,title:"Projet professionnel",text:job?esc(job.libelle)+" — ROME "+esc(job.code):"Choisir un métier ROME pour cibler la suite du parcours."},
+    {done:offers.length>0,title:"Offres à comparer",text:offers.length?offers.length+" offre"+(offers.length>1?"s":"")+" sélectionnée"+(offers.length>1?"s":"")+".":"Sélectionner une ou plusieurs offres à comparer."},
+    {done:!!job,title:"Compétences",text:job?"Consulter les compétences du métier et préciser les éléments à vérifier.":"Le métier ROME est nécessaire pour préparer cette étape."},
+    {done:false,title:"Prochaine action",text:offers.length?"Ouvrir CV ↔ Offre pour préparer les points à valoriser et à préciser avec le candidat.":job?"Explorer les offres correspondant au métier ciblé.":"Commencer par préciser le métier recherché."}
+  ];
+  box.innerHTML=steps.map((s,i)=>'<article class="plan-step '+(s.done?"done":"")+'"><span class="plan-number">'+(s.done?"✓":i+1)+'</span><div><h3>'+s.title+'</h3><p>'+s.text+'</p></div></article>').join("");
+}
+function openPlanView(){
+  homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);planView.hidden=false;renderPlan();window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#plan"]');if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="plan"],.sidebar a[href="#plan"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openPlanView()}));
+document.getElementById("planBackHome").addEventListener("click",openHome);
