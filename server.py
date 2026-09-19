@@ -216,7 +216,9 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
                 if response.status_code < 400:
                     items = normalize_rome_competences(response.json())
                     if items:
-                        data = {"codeRome": code_rome, "competences": items}\n                        ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}\n                        return data
+                        data = {"codeRome": code_rome, "competences": items}
+                        ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}
+                        return data
                 if response.status_code == 429:
                     raise HTTPException(429, "Le service ROME est momentanément très sollicité.")
     raise HTTPException(502, "Les compétences ROME sont momentanément indisponibles.")
