@@ -125,18 +125,30 @@ async function renderSkills(){
       if(best&&bestScore>=0.34)return {proof:best,level:"mid"};
       return {proof:null,level:null};
     };
-    list.innerHTML=items.map(item=>{
+    const counts={check:0,mid:0,ask:0};\n    list.innerHTML=items.map(item=>{
       const match=evidenceFor(item.libelle);
       const proof=match.proof;
       const state=match.level||"ask";
-      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
+      counts[state]++;\n      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
       const note=state==="check"
         ? 'Élément proche repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
         : state==="mid"
           ? 'Indice partiel repéré dans le CV : « '+esc(proof)+' ». À préciser avec le candidat avant de considérer la compétence comme maîtrisée.'
           : "Compétence attendue par le métier : à vérifier avec le candidat. Elle ne doit pas être considérée comme acquise sans élément dans le CV.";
-      return '<div class="skill-row"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
+      return '<div class="skill-row" data-skill-state="'+state+'"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
     }).join("");
+    document.getElementById("skillCountCheck").textContent=counts.check;
+    document.getElementById("skillCountMid").textContent=counts.mid;
+    document.getElementById("skillCountAsk").textContent=counts.ask;
+    document.getElementById("skillCountAll").textContent=items.length;
+    document.querySelectorAll("[data-skill-filter]").forEach(btn=>{
+      btn.classList.toggle("active",btn.dataset.skillFilter==="all");
+      btn.onclick=()=>{
+        const filter=btn.dataset.skillFilter;
+        document.querySelectorAll("[data-skill-filter]").forEach(x=>x.classList.toggle("active",x===btn));
+        document.querySelectorAll("#skillsList .skill-row").forEach(row=>{row.hidden=filter!=="all"&&row.dataset.skillState!==filter});
+      };
+    });
   }catch(e){
     list.innerHTML='<div class="rome-loading">Les compétences ROME sont momentanément indisponibles. Réessayez dans quelques instants.</div>';
   }
