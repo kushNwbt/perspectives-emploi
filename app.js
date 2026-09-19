@@ -299,6 +299,7 @@ function openMarketView(){
 document.querySelectorAll('[data-view="market"],.sidebar a[href="#marche"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openMarketView()}));
 document.getElementById("marketBackHome").addEventListener("click",openHome);
 document.getElementById("marketOpenOffers").addEventListener("click",openOffersView);
+document.getElementById("marketOpenSkills").addEventListener("click",openSkillsView);
 
 
 const planView=document.getElementById("planView");
