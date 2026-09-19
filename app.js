@@ -279,6 +279,8 @@ function openTrainingView(){
 }
 document.querySelectorAll('[data-view="training"],.sidebar a[href="#formations"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openTrainingView()}));
 document.getElementById("trainingBackHome").addEventListener("click",openHome);
+document.getElementById("trainingOpenSkills").addEventListener("click",openSkillsView);
+document.getElementById("trainingOpenPlan").addEventListener("click",openPlanView);
 
 
 const marketView=document.getElementById("marketView");
