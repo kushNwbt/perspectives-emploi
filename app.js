@@ -195,3 +195,29 @@ function openOffersView(){
 }
 document.querySelectorAll('[data-view="offers"],.sidebar a[href="#offres"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openOffersView()}));
 document.getElementById("offersBackHome").addEventListener("click",()=>{offersView.hidden=true;openHome()});
+
+
+const comparisonView=document.getElementById("comparisonView");
+function renderComparison(){
+  const empty=document.getElementById("comparisonEmpty"),content=document.getElementById("comparisonContent");
+  let offers=[],cv=null;
+  try{offers=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]")}catch(e){}
+  try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}
+  if(!offers.length){empty.hidden=false;content.hidden=true;empty.textContent="Sélectionnez au moins une offre depuis le module Offres avec le bouton « ＋ Comparer ».";return}
+  empty.hidden=true;content.hidden=false;
+  const evidence=(cv&&cv.competences_cv)||[];
+  content.innerHTML=offers.map(o=>{
+    const hay=normalizeSkill([o.intitule,o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" "));
+    let best="",score=0;
+    evidence.forEach(ev=>{const s=overlapScore(hay,normalizeSkill(ev));if(s>score){score=s;best=ev}});
+    const state=score>=.34?"mid":"ask";
+    const note=best&&score>=.34?'Élément du CV à examiner : « '+esc(best)+' ». La correspondance doit être confirmée avec le contenu détaillé de l’offre.':"Aucune correspondance suffisamment explicite détectée automatiquement dans les éléments analysés du CV.";
+    return '<article class="comparison-card"><div class="comparison-title"><div><span>Offre sélectionnée</span><h3>'+esc(o.intitule)+'</h3><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><span class="skill-state '+state+'">'+(state==="mid"?"△":"?")+'</span></div><p>'+note+'</p><a href="'+esc(o.url)+'" target="_blank" rel="noopener">Consulter l’offre France Travail →</a></article>';
+  }).join("");
+}
+function openComparisonView(){
+  homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);comparisonView.hidden=false;renderComparison();window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#comparaison"]');if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="comparison"],.sidebar a[href="#comparaison"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openComparisonView()}));
+document.getElementById("comparisonBackHome").addEventListener("click",openHome);
