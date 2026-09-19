@@ -70,7 +70,8 @@ function renderSessionSummary(){
   const commune=sessionStorage.getItem("perspectives_offers_commune")||"";
   if(!cv&&!job&&!offers.length&&!commune){box.hidden=true;box.innerHTML="";return}
   const parts=[cv?"CV analysé":"CV à importer",job?escapeHtml(job.label||job.libelle||job.intitule||job.code||"Métier sélectionné"):"Métier à définir",offers.length+" offre"+(offers.length>1?"s":"")+" sélectionnée"+(offers.length>1?"s":"")];if(commune)parts.push("Zone : "+escapeHtml(commune));
-  box.hidden=false;box.innerHTML='<strong>Session en cours</strong><span>'+parts.join(" · ")+"</span>";
+  box.hidden=false;box.innerHTML='<strong>Session en cours</strong><span>'+parts.join(" · ")+'</span><button id="sessionContinue" type="button">Continuer →</button>';
+  document.getElementById("sessionContinue").addEventListener("click",()=>{if(offers.length&&cv)return openComparisonView();if(job)return openOffersView();if(cv)return openSkillsView();openCvDiagnostic()});
 }
 
 function openHome(){renderSessionSummary();
