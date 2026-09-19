@@ -310,3 +310,10 @@ document.getElementById("newSessionBtn").addEventListener("click",()=>{
 
 document.getElementById("offersSearch").addEventListener("click",renderOffers);
 document.getElementById("offersCommune").addEventListener("keydown",e=>{if(e.key==="Enter")renderOffers()});
+
+const offersCommuneInput=document.getElementById("offersCommune");
+const offersClearCommune=document.getElementById("offersClearCommune");
+function syncOffersClear(){offersClearCommune.hidden=!offersCommuneInput.value.trim()}
+offersCommuneInput.addEventListener("input",syncOffersClear);
+offersClearCommune.addEventListener("click",()=>{offersCommuneInput.value="";sessionStorage.removeItem("perspectives_offers_commune");syncOffersClear();renderOffers()});
+syncOffersClear();
