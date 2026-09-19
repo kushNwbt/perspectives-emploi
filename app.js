@@ -207,13 +207,18 @@ function renderComparison(){
   empty.hidden=true;content.hidden=false;
   const evidence=(cv&&cv.competences_cv)||[];
   content.innerHTML=offers.map(o=>{
-    const offerText=[o.intitule,o.description,o.experience,...(o.competences||[])].filter(Boolean).join(" ");
-    const hay=normalizeSkill(offerText);
-    let best="",score=0;
-    evidence.forEach(ev=>{const s=overlapScore(hay,normalizeSkill(ev));if(s>score){score=s;best=ev}});
-    const state=score>=.34?"mid":"ask";
-    const note=best&&score>=.34?'Élément du CV à examiner : « '+esc(best)+' ». La correspondance doit être confirmée avec le contenu détaillé de l’offre.':"Aucune correspondance suffisamment explicite détectée automatiquement dans les éléments analysés du CV.";
-    return '<article class="comparison-card"><div class="comparison-title"><div><span>Offre sélectionnée</span><h3>'+esc(o.intitule)+'</h3><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><span class="skill-state '+state+'">'+(state==="mid"?"△":"?")+'</span></div><p>'+note+'</p><a href="'+esc(o.url)+'" target="_blank" rel="noopener">Consulter l’offre France Travail →</a></article>';
+    const requirements=[...(o.competences||[])];
+    if(o.experience) requirements.push("Expérience : "+o.experience);
+    const rows=requirements.slice(0,12).map(req=>{
+      const nr=normalizeSkill(req);let best="",score=0;
+      evidence.forEach(ev=>{const s=overlapScore(nr,normalizeSkill(ev));if(s>score){score=s;best=ev}});
+      const state=score>=.60?"check":score>=.34?"mid":"ask";
+      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
+      const note=state==="check"?'Élément proche dans le CV : « '+esc(best)+' ».':state==="mid"?'Indice partiel dans le CV : « '+esc(best)+' ». À préciser.':"Aucun élément suffisamment explicite détecté dans le CV.";
+      return '<div class="comparison-requirement"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(req)+'</strong><p>'+note+'</p></div></div>';
+    }).join("");
+    const desc=o.description?'<details class="offer-description"><summary>Voir le contenu de l’offre utilisé pour l’analyse</summary><p>'+esc(o.description)+'</p></details>':"";
+    return '<article class="comparison-card"><div class="comparison-title"><div><span>Offre sélectionnée</span><h3>'+esc(o.intitule)+'</h3><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div></div><div class="comparison-requirements">'+(rows||'<p>Aucune compétence structurée fournie par cette offre.</p>')+'</div>'+desc+'<a href="'+esc(o.url)+'" target="_blank" rel="noopener">Consulter l’offre France Travail →</a></article>';
   }).join("");
 }
 function openComparisonView(){
