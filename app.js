@@ -125,11 +125,13 @@ async function renderSkills(){
       if(best&&bestScore>=0.34)return {proof:best,level:"mid"};
       return {proof:null,level:null};
     };
-    const counts={check:0,mid:0,ask:0};\n    list.innerHTML=items.map(item=>{
+    const counts={check:0,mid:0,ask:0};
+    list.innerHTML=items.map(item=>{
       const match=evidenceFor(item.libelle);
       const proof=match.proof;
       const state=match.level||"ask";
-      counts[state]++;\n      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
+      counts[state]++;
+      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
       const note=state==="check"
         ? 'Élément proche repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
         : state==="mid"
