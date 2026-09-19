@@ -131,7 +131,8 @@ async function renderSkills(){
       const proof=match.proof;
       const state=match.level||"ask";
       counts[state]++;
-      counts[state]++;\n      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
+      counts[state]++;
+      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
       const note=state==="check"
         ? 'Élément proche repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
         : state==="mid"
@@ -213,7 +214,8 @@ function renderComparison(){
   content.innerHTML=offers.map(o=>{
     const requirements=[...(o.competences||[])];
     if(o.experience) requirements.push("Expérience : "+o.experience);
-    let counts={check:0,mid:0,ask:0};\n    const rows=requirements.slice(0,12).map(req=>{
+    let counts={check:0,mid:0,ask:0};
+    const rows=requirements.slice(0,12).map(req=>{
       const nr=normalizeSkill(req);let best="",score=0;
       evidence.forEach(ev=>{const s=overlapScore(nr,normalizeSkill(ev));if(s>score){score=s;best=ev}});
       const state=score>=.60?"check":score>=.34?"mid":"ask";
@@ -222,8 +224,13 @@ function renderComparison(){
       return '<div class="comparison-requirement"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(req)+'</strong><p>'+note+'</p></div></div>';
     }).join("");
     const desc=o.description?'<details class="offer-description"><summary>Voir le contenu de l’offre utilisé pour l’analyse</summary><p>'+esc(o.description)+'</p></details>':"";
-    const summary='<div class="comparison-summary"><span class="check">✓ Identifiée <b>'+counts.check+'</b></span><span class="mid">△ À préciser <b>'+counts.mid+'</b></span><span class="ask">? À vérifier <b>'+counts.ask+'</b></span></div>';\n    return '<article class="comparison-card"><div class="comparison-title"><div><span>Offre sélectionnée</span><h3>'+esc(o.intitule)+'</h3><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div></div>'+summary+'<div class="comparison-requirements">'+(rows||'<p>Aucune compétence structurée fournie par cette offre.</p>')+'</div>'+desc+'<a href="'+esc(o.url)+'" target="_blank" rel="noopener">Consulter l’offre France Travail →</a></article>';
+    const summary='<div class="comparison-summary"><span class="check">✓ Identifiée <b>'+counts.check+'</b></span><span class="mid">△ À préciser <b>'+counts.mid+'</b></span><span class="ask">? À vérifier <b>'+counts.ask+'</b></span></div>';\n    return '<article class="comparison-card"><div class="comparison-title"><div><span>Offre sélectionnée</span><h3>'+esc(o.intitule)+'</h3><p>'+esc([o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" · "))+'</p></div><button type="button" class="comparison-remove" data-remove-offer="'+esc(o.id)+'">Retirer</button></div>'+summary+'<div class="comparison-requirements">'+(rows||'<p>Aucune compétence structurée fournie par cette offre.</p>')+'</div>'+desc+'<a href="'+esc(o.url)+'" target="_blank" rel="noopener">Consulter l’offre France Travail →</a></article>';
   }).join("");
+  content.querySelectorAll(".comparison-remove").forEach(btn=>btn.addEventListener("click",()=>{
+    const updated=offers.filter(o=>String(o.id)!==String(btn.dataset.removeOffer));
+    sessionStorage.setItem("perspectives_compare_offers",JSON.stringify(updated));
+    renderComparison();
+  }));
 }
 function openComparisonView(){
   homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);comparisonView.hidden=false;renderComparison();window.scrollTo({top:0,behavior:"smooth"});
