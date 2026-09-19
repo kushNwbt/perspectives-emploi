@@ -217,6 +217,9 @@ function renderComparison(){
   try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}
   const selectionCount=document.getElementById("comparisonSelectionCount");selectionCount.textContent=offers.length?offers.length+" offre"+(offers.length>1?"s":"")+" sélectionnée"+(offers.length>1?"s":"")+" sur 5":"";selectionCount.hidden=!offers.length;
   const clearOffers=document.getElementById("comparisonClearOffers");clearOffers.hidden=!offers.length;
+  document.getElementById("comparisonReviewCv").hidden=!cv;
+  let targetJob=null;try{targetJob=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
+  document.getElementById("comparisonReviewSkills").hidden=!targetJob;
   if(!offers.length){empty.hidden=false;content.hidden=true;empty.innerHTML='<p>Sélectionnez au moins une offre depuis le module Offres avec le bouton « ＋ Comparer ».</p><button id="comparisonEmptyOffers" type="button">Rechercher des offres →</button>';document.getElementById("comparisonEmptyOffers").addEventListener("click",openOffersView);return}
   if(!cv){empty.hidden=false;content.hidden=true;empty.innerHTML='<p>Les offres sont sélectionnées, mais aucun CV n’est encore analysé.</p><button id="comparisonEmptyCv" type="button">Importer et analyser un CV →</button>';document.getElementById("comparisonEmptyCv").addEventListener("click",openCvDiagnostic);return}
   empty.hidden=true;content.hidden=false;
