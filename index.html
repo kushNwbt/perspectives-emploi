@@ -1,25 +1,62 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Perspectives Emploi</title><meta name="description" content="Perspectives Emploi, outil d'aide à l'accompagnement professionnel.">
-<link rel="stylesheet" href="style.css"></head><body>
-<header><div class="brand"><span class="logo">PE</span> Perspectives Emploi</div></header>
-<main>
-<section class="hero"><div class="tag">ACCOMPAGNEMENT PROFESSIONNEL</div>
-<h1>Votre profil, vos compétences,<br><span>vos opportunités.</span></h1>
-<p>Perspectives Emploi est un outil d'aide à l'accompagnement professionnel permettant de partir d'un CV pour mieux comprendre un profil, identifier des pistes métiers et explorer les opportunités disponibles.</p>
-<a href="#parcours">Découvrir le service</a></section>
-<section id="parcours" class="section"><h2>Un parcours complet</h2><p class="sub">Du diagnostic du CV jusqu'au plan d'action, les informations sont réunies dans un même outil.</p>
-<div class="grid">
-<article><b>01</b><h3>Bilan du CV</h3><p>Analyser la structure et le contenu du CV et identifier les améliorations prioritaires.</p></article>
-<article><b>02</b><h3>Compétences & métiers</h3><p>Mettre en évidence les compétences du profil et les rapprocher de métiers de référence.</p></article>
-<article><b>03</b><h3>Opportunités d'emploi</h3><p>Explorer les offres correspondant au métier recherché et au territoire sélectionné.</p></article>
-<article><b>04</b><h3>Formations</h3><p>Identifier des possibilités de formation en lien avec le projet professionnel.</p></article>
-<article><b>05</b><h3>Marché du travail</h3><p>Apporter des éléments de contexte sur l'emploi, les recrutements et les besoins des territoires.</p></article>
-<article><b>06</b><h3>Plan d'action</h3><p>Synthétiser les constats et construire les prochaines étapes avec la personne accompagnée.</p></article>
-</div></section>
-<section class="api"><div class="tag">DONNÉES PROFESSIONNELLES</div><h2>Des informations issues des services France Travail</h2>
-<p>Perspectives Emploi a vocation à utiliser des API mises à disposition sur France Travail.io, notamment pour les référentiels métiers et compétences, les offres d'emploi, les formations et les indicateurs du marché du travail.</p>
-<p class="note">Les données présentées constituent une aide à l'accompagnement et à la décision. Elles ne garantissent ni un recrutement, ni l'accès à une formation.</p></section>
-<section class="section privacy"><h2>Respect des données</h2><p>Le service est conçu pour limiter les données utilisées à celles nécessaires à l'analyse et à l'accompagnement professionnel. Les modalités de traitement et de conservation seront précisées avant la mise en production du service.</p></section>
-</main><footer><strong>Perspectives Emploi</strong><span>Outil d'aide à l'accompagnement professionnel</span><span>Projet en cours de développement</span></footer>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Perspectives Emploi</title>
+<meta name="description" content="Perspectives Emploi — Votre profil, vos compétences, vos opportunités.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="rf"><strong>RÉPUBLIQUE<br>FRANÇAISE</strong><small>Liberté · Égalité · Fraternité</small></div>
+  <div class="ft"><span class="ft-mark">◢</span><strong>france<br>travail</strong></div>
+  <div class="product"><strong>Perspectives Emploi</strong><span>Votre profil, vos compétences, vos opportunités</span></div>
+  <span class="version">Version web · V6.24.5</span>
+</header>
+<div class="app">
+<aside class="sidebar">
+  <nav>
+    <a class="active" href="#accueil">⌂ <span>Accueil</span></a>
+    <a href="#cv">▤ <span>Mon CV</span></a>
+    <a href="#competences">◇ <span>Compétences & métiers</span></a>
+    <a href="#offres">⌕ <span>Offres</span></a>
+    <a href="#comparaison">⇄ <span>CV ↔ Offre</span></a>
+    <a href="#formations">▣ <span>Formations</span></a>
+    <a href="#marche">▥ <span>Marché du travail</span></a>
+    <a href="#plan">✓ <span>Plan d’action</span></a>
+  </nav>
+  <div class="api-link">⚙ <span>Connexion API</span></div>
+</aside>
+<main id="accueil">
+  <section class="welcome">
+    <div><span class="eyebrow">PERSPECTIVES EMPLOI</span><h1>Construisons votre parcours professionnel.</h1>
+    <p>Un même espace pour analyser un CV, identifier les compétences, explorer les métiers et transformer les pistes en actions concrètes.</p></div>
+    <div class="badge">360°<small>du profil<br>à l’action</small></div>
+  </section>
+  <section class="start">
+    <div class="section-title"><div><span class="step">1</span><h2>Commencer par votre CV</h2></div><p>Importez le CV pour lancer l’analyse et alimenter le parcours.</p></div>
+    <div class="upload"><div class="upload-icon">⇧</div><div><strong>Importer votre CV</strong><span>PDF, DOCX ou TXT</span></div><button>Choisir un fichier</button></div>
+  </section>
+  <section class="start">
+    <div class="section-title"><div><span class="step">2</span><h2>Quel métier visez-vous ?</h2></div><p>Choisissez un métier ROME 4.0 si votre projet est déjà défini.</p></div>
+    <label>Métier visé — ROME 4.0</label>
+    <div class="searchbox">Rechercher un métier ou un code ROME… <span>⌕</span></div>
+    <p class="hint">Vous pouvez aussi poursuivre sans métier visé : les pistes seront proposées à partir des compétences identifiées dans le CV.</p>
+  </section>
+  <section class="modules">
+    <div class="section-title"><div><span class="step">3</span><h2>Explorer votre parcours</h2></div><p>Chaque module apporte un éclairage complémentaire.</p></div>
+    <div class="cards">
+      <article id="cv"><i>▤</i><div><h3>Mon CV</h3><p>Diagnostic pédagogique, priorités et conseils concrets.</p></div><b>→</b></article>
+      <article id="competences"><i>◇</i><div><h3>Compétences & métiers</h3><p>Compétences identifiées, transférables et métiers proches.</p></div><b>→</b></article>
+      <article id="offres"><i>⌕</i><div><h3>Offres d’emploi</h3><p>Explorer les opportunités liées aux métiers sélectionnés.</p></div><b>→</b></article>
+      <article id="comparaison"><i>⇄</i><div><h3>CV ↔ Offre</h3><p>Comparer une offre avec le CV sans modifier le parcours.</p></div><b>→</b></article>
+      <article id="formations"><i>▣</i><div><h3>Formations</h3><p>Identifier des formations en lien avec le projet.</p></div><b>→</b></article>
+      <article id="marche"><i>▥</i><div><h3>Marché du travail</h3><p>Comprendre le métier et son environnement d’emploi.</p></div><b>→</b></article>
+      <article id="plan" class="wide"><i>✓</i><div><h3>Plan d’action</h3><p>Réunir les priorités CV, métiers, compétences et prochaines étapes.</p></div><b>→</b></article>
+    </div>
+  </section>
+  <section class="notice"><strong>Une aide à l’accompagnement professionnel</strong><p>Les analyses et indicateurs facilitent la lecture d’un profil et la préparation des échanges. Ils ne constituent ni une décision de recrutement, ni une garantie d’accès à une formation.</p></section>
+  <footer><strong>Perspectives Emploi</strong><span>Projet en cours de développement · Données France Travail selon les services disponibles</span></footer>
+</main>
+</div>
 </body></html>
