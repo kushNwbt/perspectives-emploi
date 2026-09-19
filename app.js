@@ -42,3 +42,32 @@ fileInput.addEventListener("change",()=>handleFile(fileInput.files[0]));
 ["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("drag")}));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag")}));
 drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
+
+const homeSections=[...document.querySelectorAll("main > section:not(#cvDiagnostic), main > footer")];
+const cvDiagnostic=document.getElementById("cvDiagnostic");
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderCvDiagnostic(){
+  const raw=sessionStorage.getItem("perspectives_cv_analysis");
+  document.getElementById("diagEmpty").hidden=!!raw;
+  document.getElementById("diagContent").hidden=!raw;
+  if(!raw)return;
+  const a=JSON.parse(raw);
+  document.getElementById("diagScore").firstChild.nodeValue=(a.score??"--");
+  const st=document.getElementById("diagStatus"); st.textContent=a.statut||"Non évalué"; st.className="status-pill "+((a.statut||"").toLowerCase().includes("bon")?"good":(a.statut||"").toLowerCase().includes("prior")?"bad":"warn");
+  document.getElementById("diagDisclaimer").textContent=a.avertissement||"";
+  const sections=document.getElementById("diagSections"); sections.innerHTML="";
+  Object.entries(a.sections||{}).forEach(([name,ok])=>{sections.insertAdjacentHTML("beforeend",'<div class="diag-card"><span class="diag-icon '+(ok?"good":"warn")+'">'+(ok?"✓":"!")+'</span><div><strong>'+esc(name)+'</strong><p>'+(ok?"Rubrique identifiée dans le CV.":"Rubrique à rendre plus visible ou à vérifier.")+'</p></div></div>')});
+  const priorities=document.getElementById("diagPriorities"); priorities.innerHTML="";
+  (a.priorites||[]).forEach(p=>{const cls=(p.niveau||"").toLowerCase().includes("bon")?"good":(p.niveau||"").toLowerCase().includes("prior")?"bad":"warn";priorities.insertAdjacentHTML("beforeend",'<div class="priority-card '+cls+'"><span>'+esc(p.niveau)+'</span><h4>'+esc(p.titre)+'</h4><p><b>👉 À faire :</b> '+esc(p.conseil)+'</p></div>')});
+}
+function openCvView(){
+  homeSections.forEach(x=>x.hidden=true); cvDiagnostic.hidden=false; renderCvDiagnostic(); window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#cv"]'); if(link)link.classList.add("active");
+}
+function openHome(){
+  cvDiagnostic.hidden=true; homeSections.forEach(x=>x.hidden=false); window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#accueil"]'); if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="cv"],.sidebar a[href="#cv"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openCvView()}));
+document.querySelector('.sidebar a[href="#accueil"]').addEventListener("click",e=>{e.preventDefault();openHome()});
+document.getElementById("backHome").addEventListener("click",openHome);
