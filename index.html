@@ -35,7 +35,8 @@
   </section>
   <section class="start">
     <div class="section-title"><div><span class="step">1</span><h2>Commencer par votre CV</h2></div><p>Importez le CV pour lancer l’analyse et alimenter le parcours.</p></div>
-    <div class="upload"><div class="upload-icon">⇧</div><div><strong>Importer votre CV</strong><span>PDF, DOCX ou TXT</span></div><button>Choisir un fichier</button></div>
+    <div class="upload" id="cvDropZone"><div class="upload-icon">⇧</div><div><strong id="cvFileTitle">Importer votre CV</strong><span id="cvFileInfo">PDF, DOCX ou TXT · 10 Mo maximum</span></div><input id="cvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden><button id="cvChoose" type="button">Choisir un fichier</button></div>
+    <div id="cvStatus" class="cv-status" hidden></div>
   </section>
   <section class="start">
     <div class="section-title"><div><span class="step">2</span><h2>Quel métier visez-vous ?</h2></div><p>Choisissez un métier ROME 4.0 si votre projet est déjà défini.</p></div>
@@ -59,4 +60,5 @@
   <footer><strong>Perspectives Emploi</strong><span>Projet en cours de développement · Données France Travail selon les services disponibles</span></footer>
 </main>
 </div>
+<script src="app.js"></script>
 </body></html>
