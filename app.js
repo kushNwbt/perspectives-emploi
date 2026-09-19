@@ -207,7 +207,8 @@ function renderComparison(){
   empty.hidden=true;content.hidden=false;
   const evidence=(cv&&cv.competences_cv)||[];
   content.innerHTML=offers.map(o=>{
-    const hay=normalizeSkill([o.intitule,o.entreprise,o.lieu,o.typeContrat].filter(Boolean).join(" "));
+    const offerText=[o.intitule,o.description,o.experience,...(o.competences||[])].filter(Boolean).join(" ");
+    const hay=normalizeSkill(offerText);
     let best="",score=0;
     evidence.forEach(ev=>{const s=overlapScore(hay,normalizeSkill(ev));if(s>score){score=s;best=ev}});
     const state=score>=.34?"mid":"ask";
