@@ -339,3 +339,5 @@ document.getElementById("comparisonAddOffers").addEventListener("click",openOffe
 document.getElementById("comparisonReviewCv").addEventListener("click",openCvDiagnostic);
 
 document.getElementById("comparisonReviewSkills").addEventListener("click",openSkillsView);
+
+document.getElementById("comparisonClearOffers").addEventListener("click",()=>{const current=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");if(!current.length)return;if(confirm("Vider les offres sélectionnées pour la comparaison ?")){sessionStorage.removeItem("perspectives_compare_offers");renderComparison()}});
