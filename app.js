@@ -113,22 +113,27 @@ async function renderSkills(){
     const tokens=s=>norm(s).split(" ").filter(w=>w.length>=4);
     const evidenceFor=label=>{
       const lt=tokens(label);
-      if(!lt.length)return null;
-      return evidence.find(ev=>{
+      if(!lt.length)return {proof:null,level:null};
+      let best=null,bestScore=0;
+      evidence.forEach(ev=>{
         const et=tokens(ev);
         const common=lt.filter(t=>et.includes(t)).length;
-        return common>=Math.min(2,lt.length)&&common/lt.length>=0.45;
-      })||null;
+        const score=common/Math.max(1,Math.min(lt.length,et.length));
+        if(common>=1&&score>bestScore){best=ev;bestScore=score}
+      });
+      if(best&&bestScore>=0.60)return {proof:best,level:"check"};
+      if(best&&bestScore>=0.34)return {proof:best,level:"mid"};
+      return {proof:null,level:null};
     };
     list.innerHTML=items.map(item=>{
-      const proof=evidenceFor(item.libelle);
-      const cvHasSkills=!!(cv.sections||{})["Compétences"];
-      const state=proof?"check":cvHasSkills?"mid":"ask";
-      const symbol=proof?"✓":state==="mid"?"△":"?";
-      const note=proof
-        ? 'Élément repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
+      const match=evidenceFor(item.libelle);
+      const proof=match.proof;
+      const state=match.level||"ask";
+      const symbol=state==="check"?"✓":state==="mid"?"△":"?";
+      const note=state==="check"
+        ? 'Élément proche repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
         : state==="mid"
-          ? "Une rubrique Compétences est présente dans le CV, mais aucun élément suffisamment proche n’a été repéré automatiquement. À préciser avec le candidat avant de l’ajouter ou de la reformuler."
+          ? 'Indice partiel repéré dans le CV : « '+esc(proof)+' ». À préciser avec le candidat avant de considérer la compétence comme maîtrisée.'
           : "Compétence attendue par le métier : à vérifier avec le candidat. Elle ne doit pas être considérée comme acquise sans élément dans le CV.";
       return '<div class="skill-row"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
     }).join("");
