@@ -122,9 +122,14 @@ async function renderSkills(){
     };
     list.innerHTML=items.map(item=>{
       const proof=evidenceFor(item.libelle);
-      const state=proof?"check":"ask";
-      const symbol=proof?"✓":"?";
-      const note=proof?'Élément repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.':"Compétence attendue par le métier : à vérifier avec le candidat. Elle ne doit pas être considérée comme acquise sans élément dans le CV.";
+      const cvHasSkills=!!(cv.sections||{})["Compétences"];
+      const state=proof?"check":cvHasSkills?"mid":"ask";
+      const symbol=proof?"✓":state==="mid"?"△":"?";
+      const note=proof
+        ? 'Élément repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
+        : state==="mid"
+          ? "Une rubrique Compétences est présente dans le CV, mais aucun élément suffisamment proche n’a été repéré automatiquement. À préciser avec le candidat avant de l’ajouter ou de la reformuler."
+          : "Compétence attendue par le métier : à vérifier avec le candidat. Elle ne doit pas être considérée comme acquise sans élément dans le CV.";
       return '<div class="skill-row"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
     }).join("");
   }catch(e){
