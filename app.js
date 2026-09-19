@@ -316,7 +316,9 @@ function renderPlan(){
     {done:false,title:"Prochaine action",text:offers.length?"Ouvrir CV ↔ Offre pour préparer les points à valoriser et à préciser avec le candidat.":job?"Explorer les offres correspondant au métier ciblé.":"Commencer par préciser le métier recherché."}
   ];
   const actions=["cv","skills","offers","skills","next"];
-  box.innerHTML=steps.map((s,i)=>'<article class="plan-step '+(s.done?"done":"")+'"><span class="plan-number">'+(s.done?"✓":i+1)+'</span><div><h3>'+s.title+'</h3><p>'+s.text+'</p><button class="plan-action" data-plan-action="'+actions[i]+'" type="button">'+(s.done?"Revoir cette étape →":"Ouvrir cette étape →")+'</button></div></article>').join("");
+  const completed=[!!cv,!!job,offers.length>0,!!job].filter(Boolean).length;
+  const summary='<section class="plan-summary"><div><span>Avancement du parcours</span><strong>'+completed+' / 4 étapes préparées</strong></div><p>'+(job?'Projet : '+esc(job.libelle)+' — ROME '+esc(job.code):'Projet professionnel à préciser')+(offers.length?' · '+offers.length+' offre'+(offers.length>1?'s':'')+' retenue'+(offers.length>1?'s':''):'')+'</p></section>';
+  box.innerHTML=summary+steps.map((s,i)=>'<article class="plan-step '+(s.done?"done":"")+'"><span class="plan-number">'+(s.done?"✓":i+1)+'</span><div><h3>'+s.title+'</h3><p>'+s.text+'</p><button class="plan-action" data-plan-action="'+actions[i]+'" type="button">'+(s.done?"Revoir cette étape →":"Ouvrir cette étape →")+'</button></div></article>').join("");
   box.querySelectorAll(".plan-action").forEach(btn=>btn.addEventListener("click",()=>{
     const a=btn.dataset.planAction;
     if(a==="cv"){openCvDiagnostic();return}
