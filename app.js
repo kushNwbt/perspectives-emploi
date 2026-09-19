@@ -71,3 +71,26 @@ function openHome(){
 document.querySelectorAll('[data-view="cv"],.sidebar a[href="#cv"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openCvView()}));
 document.querySelector('.sidebar a[href="#accueil"]').addEventListener("click",e=>{e.preventDefault();openHome()});
 document.getElementById("backHome").addEventListener("click",openHome);
+
+const romeSearch=document.getElementById("romeSearch"),romeResults=document.getElementById("romeResults"),romeSelected=document.getElementById("romeSelected");
+let romeTimer=null;
+function renderRomeSelected(job){
+  if(!job){romeSelected.hidden=true;romeSelected.innerHTML="";return;}
+  romeSelected.hidden=false;romeSelected.innerHTML='<div><strong>'+esc(job.libelle)+'</strong><span>ROME '+esc(job.code)+'</span></div><button type="button" id="clearRome">×</button>';
+  document.getElementById("clearRome").onclick=()=>{sessionStorage.removeItem("perspectives_target_job");romeSearch.value="";renderRomeSelected(null)};
+}
+async function searchRome(q){
+  if(q.trim().length<2){romeResults.hidden=true;romeResults.innerHTML="";return;}
+  romeResults.hidden=false;romeResults.innerHTML='<div class="rome-loading">Recherche…</div>';
+  try{
+    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/rome/metiers?q="+encodeURIComponent(q.trim()));
+    if(!r.ok)throw new Error();
+    const jobs=await r.json();romeResults.innerHTML="";
+    if(!jobs.length){romeResults.innerHTML='<div class="rome-loading">Aucun métier trouvé.</div>';return;}
+    jobs.slice(0,8).forEach(job=>{const b=document.createElement("button");b.type="button";b.className="rome-option";b.innerHTML='<strong>'+esc(job.libelle)+'</strong><span>'+esc(job.code)+'</span>';b.onclick=()=>{sessionStorage.setItem("perspectives_target_job",JSON.stringify(job));romeSearch.value=job.libelle;romeResults.hidden=true;renderRomeSelected(job)};romeResults.appendChild(b)});
+  }catch(e){romeResults.innerHTML='<div class="rome-loading">Recherche momentanément indisponible.</div>'}
+}
+romeSearch.addEventListener("input",()=>{clearTimeout(romeTimer);romeTimer=setTimeout(()=>searchRome(romeSearch.value),280)});
+romeSearch.addEventListener("focus",()=>{if(romeSearch.value.trim().length>=2)searchRome(romeSearch.value)});
+document.addEventListener("click",e=>{if(!e.target.closest(".rome-wrap"))romeResults.hidden=true});
+try{const saved=JSON.parse(sessionStorage.getItem("perspectives_target_job"));if(saved){romeSearch.value=saved.libelle||"";renderRomeSelected(saved)}}catch(e){}
