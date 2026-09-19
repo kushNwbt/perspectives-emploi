@@ -1,4 +1,4 @@
-const API_BASE = window.PERSPECTIVES_API_URL || "";
+const API_BASE = window.PERSPECTIVES_API_URL || "https://perspectives-emploi-api-production.up.railway.app";
 const fileInput=document.getElementById("cvFile");
 const choose=document.getElementById("cvChoose");
 const drop=document.getElementById("cvDropZone");
