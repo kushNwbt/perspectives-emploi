@@ -64,7 +64,16 @@ function openCvView(){
   homeSections.forEach(x=>x.hidden=true); cvDiagnostic.hidden=false; renderCvDiagnostic(); window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#cv"]'); if(link)link.classList.add("active");
 }
-function openHome(){
+function renderSessionSummary(){
+  const box=document.getElementById("sessionSummary");if(!box)return;
+  let cv=null,job=null,offers=[];try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}try{offers=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]")}catch(e){}
+  const commune=sessionStorage.getItem("perspectives_offers_commune")||"";
+  if(!cv&&!job&&!offers.length&&!commune){box.hidden=true;box.innerHTML="";return}
+  const parts=[cv?"CV analysé":"CV à importer",job?escapeHtml(job.label||job.libelle||job.intitule||job.code||"Métier sélectionné"):"Métier à définir",offers.length+" offre"+(offers.length>1?"s":"")+" sélectionnée"+(offers.length>1?"s":"")];if(commune)parts.push("Zone : "+escapeHtml(commune));
+  box.hidden=false;box.innerHTML='<strong>Session en cours</strong><span>'+parts.join(" · ")+"</span>";
+}
+
+function openHome(){renderSessionSummary();
   document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true); homeSections.forEach(x=>x.hidden=false); window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#accueil"]'); if(link)link.classList.add("active");
 }
