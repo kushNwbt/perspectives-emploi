@@ -43,7 +43,7 @@ fileInput.addEventListener("change",()=>handleFile(fileInput.files[0]));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag")}));
 drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
 
-const homeSections=[...document.querySelectorAll("main > section:not(#cvDiagnostic), main > footer")];
+const homeSections=[...document.querySelectorAll("main > section:not(#cvDiagnostic):not(#skillsView), main > footer")];
 const cvDiagnostic=document.getElementById("cvDiagnostic");
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function renderCvDiagnostic(){
@@ -94,3 +94,26 @@ romeSearch.addEventListener("input",()=>{clearTimeout(romeTimer);romeTimer=setTi
 romeSearch.addEventListener("focus",()=>{if(romeSearch.value.trim().length>=2)searchRome(romeSearch.value)});
 document.addEventListener("click",e=>{if(!e.target.closest(".rome-wrap"))romeResults.hidden=true});
 try{const saved=JSON.parse(sessionStorage.getItem("perspectives_target_job"));if(saved){romeSearch.value=saved.libelle||"";renderRomeSelected(saved)}}catch(e){}
+
+const skillsView=document.getElementById("skillsView");
+function renderSkills(){
+  const empty=document.getElementById("skillsEmpty"),content=document.getElementById("skillsContent"),list=document.getElementById("skillsList"),target=document.getElementById("skillsTarget");
+  let job=null,cv=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}
+  if(!cv){empty.hidden=false;content.hidden=true;empty.textContent="Importez d’abord un CV pour analyser les compétences.";return}
+  if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Aucun métier visé sélectionné. Choisissez un métier ROME depuis l’accueil pour lancer la comparaison.";return}
+  empty.hidden=true;content.hidden=false;target.innerHTML='<span>Métier comparé</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
+  const detected=Object.entries(cv.sections||{}).filter(x=>x[1]).map(x=>x[0]);
+  const rows=[
+    ["Expériences professionnelles",detected.includes("Expériences")?"ok":"check","Les expériences sont "+(detected.includes("Expériences")?"repérées dans le CV.":"à vérifier avec le candidat.")],
+    ["Compétences explicites",detected.includes("Compétences")?"ok":"mid",detected.includes("Compétences")?"Une rubrique compétences est identifiée.":"Les savoir-faire doivent être davantage explicités dans le CV."],
+    ["Formation et certifications",detected.includes("Formation")?"ok":"check",detected.includes("Formation")?"La formation est identifiable dans le CV.":"Les formations et certifications sont à vérifier."],
+    ["Coordonnées et contact",detected.includes("Coordonnées")?"ok":"mid",detected.includes("Coordonnées")?"Les coordonnées sont repérées.":"Les coordonnées doivent être rendues plus visibles."]
+  ];
+  list.innerHTML=rows.map(r=>'<div class="skill-row"><span class="skill-state '+r[1]+'">'+(r[1]=="ok"?"✓":r[1]=="mid"?"△":"?")+'</span><div><strong>'+r[0]+'</strong><p>'+r[2]+'</p></div></div>').join("");
+}
+function openSkillsView(){
+  homeSections.forEach(x=>x.hidden=true);cvDiagnostic.hidden=true;skillsView.hidden=false;renderSkills();window.scrollTo({top:0,behavior:"smooth"});
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#competences"]');if(link)link.classList.add("active");
+}
+document.querySelectorAll('[data-view="skills"],.sidebar a[href="#competences"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openSkillsView()}));
+document.getElementById("skillsBackHome").addEventListener("click",()=>{skillsView.hidden=true;openHome()});

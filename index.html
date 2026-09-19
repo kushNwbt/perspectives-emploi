@@ -48,12 +48,21 @@
     <div class="section-title"><div><span class="step">3</span><h2>Explorer votre parcours</h2></div><p>Chaque module apporte un éclairage complémentaire.</p></div>
     <div class="cards">
       <article id="cv" class="module-link" data-view="cv"><i>▤</i><div><h3>Mon CV</h3><p>Diagnostic pédagogique, priorités et conseils concrets.</p></div><b>→</b></article>
-      <article id="competences"><i>◇</i><div><h3>Compétences & métiers</h3><p>Compétences identifiées, transférables et métiers proches.</p></div><b>→</b></article>
+      <article id="competences" class="module-link" data-view="skills"><i>◇</i><div><h3>Compétences & métiers</h3><p>Compétences identifiées, transférables et métiers proches.</p></div><b>→</b></article>
       <article id="offres"><i>⌕</i><div><h3>Offres d’emploi</h3><p>Explorer les opportunités liées aux métiers sélectionnés.</p></div><b>→</b></article>
       <article id="comparaison"><i>⇄</i><div><h3>CV ↔ Offre</h3><p>Comparer une offre avec le CV sans modifier le parcours.</p></div><b>→</b></article>
       <article id="formations"><i>▣</i><div><h3>Formations</h3><p>Identifier des formations en lien avec le projet.</p></div><b>→</b></article>
       <article id="marche"><i>▥</i><div><h3>Marché du travail</h3><p>Comprendre le métier et son environnement d’emploi.</p></div><b>→</b></article>
       <article id="plan" class="wide"><i>✓</i><div><h3>Plan d’action</h3><p>Réunir les priorités CV, métiers, compétences et prochaines étapes.</p></div><b>→</b></article>
+    </div>
+  </section>
+  <section id="skillsView" class="diagnostic-view" hidden>
+    <div class="diag-head"><div><span class="eyebrow dark">COMPÉTENCES & MÉTIERS</span><h2>Mettre en perspective votre profil</h2><p id="skillsIntro">Sélectionnez un métier visé pour comparer le CV avec le référentiel ROME.</p></div><button id="skillsBackHome" type="button">← Retour à l’accueil</button></div>
+    <div id="skillsEmpty" class="diag-empty"></div>
+    <div id="skillsContent" hidden>
+      <div id="skillsTarget" class="skills-target"></div>
+      <div class="skills-legend"><span class="skill-ok">✓ Identifiée dans le CV</span><span class="skill-mid">△ À préciser dans le CV</span><span class="skill-check">? À vérifier avec le candidat</span></div>
+      <div id="skillsList" class="skills-list"></div>
     </div>
   </section>
   <section id="cvDiagnostic" class="diagnostic-view" hidden>
