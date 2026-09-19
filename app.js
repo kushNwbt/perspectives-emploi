@@ -108,12 +108,24 @@ async function renderSkills(){
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.competences||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune compétence ROME disponible pour ce métier.</div>';return}
-    const hasSkills=!!(cv.sections||{})["Compétences"];
-    list.innerHTML=items.map((item,i)=>{
-      const state=hasSkills?"check":"mid";
-      const symbol=state=="mid"?"△":"?";
-      const note=hasSkills?"Référentiel ROME : à vérifier avec le candidat et à rapprocher des éléments réellement présents dans son CV.":"Compétence attendue par le métier : à préciser dans le CV si elle est réellement maîtrisée.";
-      return '<div class="skill-row"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+esc(note)+'</p></div></div>';
+    const evidence=(cv.competences_cv||[]).map(x=>String(x).trim()).filter(Boolean);
+    const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\\s+/g," ").trim();
+    const tokens=s=>norm(s).split(" ").filter(w=>w.length>=4);
+    const evidenceFor=label=>{
+      const lt=tokens(label);
+      if(!lt.length)return null;
+      return evidence.find(ev=>{
+        const et=tokens(ev);
+        const common=lt.filter(t=>et.includes(t)).length;
+        return common>=Math.min(2,lt.length)&&common/lt.length>=0.45;
+      })||null;
+    };
+    list.innerHTML=items.map(item=>{
+      const proof=evidenceFor(item.libelle);
+      const state=proof?"check":"ask";
+      const symbol=proof?"✓":"?";
+      const note=proof?'Élément repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.':"Compétence attendue par le métier : à vérifier avec le candidat. Elle ne doit pas être considérée comme acquise sans élément dans le CV.";
+      return '<div class="skill-row"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
     }).join("");
   }catch(e){
     list.innerHTML='<div class="rome-loading">Les compétences ROME sont momentanément indisponibles. Réessayez dans quelques instants.</div>';
