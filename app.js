@@ -193,8 +193,9 @@ async function renderOffers(){
   list.innerHTML='<div class="rome-loading">Recherche des offres France Travail…</div>';
   try{
     const commune=(document.getElementById("offersZone").value||"").trim();
+    const contract=(document.getElementById("offersContract")?.value||"").trim();
     if(commune) sessionStorage.setItem("perspectives_offers_commune",commune); else sessionStorage.removeItem("perspectives_offers_commune");
-    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):""));
+    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):"")+(contract?"&type_contrat="+encodeURIComponent(contract):""));
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier'+(commune?' dans la zone « '+esc(commune)+' »':'')+'. '+(commune?'Essayez une autre commune ou videz le filtre pour élargir la recherche.':'Vous pouvez réessayer plus tard ou modifier le métier ciblé.')+'</div>';return}
@@ -384,3 +385,5 @@ function applySkillsTab(){
   rows.forEach(r=>r.hidden=false);
 }
 document.querySelectorAll("[data-skills-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".skills-tab-message").forEach(x=>x.remove());activeSkillsTab=b.dataset.skillsTab;applySkillsTab()}));
+
+const offersContract=document.getElementById("offersContract");if(offersContract){offersContract.value=sessionStorage.getItem("perspectives_offers_contract")||"";offersContract.addEventListener("change",()=>{if(offersContract.value)sessionStorage.setItem("perspectives_offers_contract",offersContract.value);else sessionStorage.removeItem("perspectives_offers_contract")})}
