@@ -298,6 +298,7 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
 
     payload = response.json()
     items, seen = [], set()
+    savoir_faire, savoirs = [], []
 
     for group in payload.get("groupesCompetencesMobilisees", []) or []:
         enjeu = group.get("enjeu") or {}
@@ -307,7 +308,9 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
             code = str(item.get("code") or "").strip()
             if label and label.lower() not in seen:
                 seen.add(label.lower())
-                items.append({"code": code, "libelle": label, "categorie": category})
+                entry={"code": code, "libelle": label, "categorie": category, "type": "savoir_faire"}
+                items.append(entry)
+                savoir_faire.append(entry)
 
     for group in payload.get("groupesSavoirs", []) or []:
         category_info = group.get("categorieSavoirs") or {}
@@ -317,12 +320,16 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
             code = str(item.get("code") or "").strip()
             if label and label.lower() not in seen:
                 seen.add(label.lower())
-                items.append({"code": code, "libelle": label, "categorie": category})
+                entry={"code": code, "libelle": label, "categorie": category, "type": "savoir"}
+                items.append(entry)
+                savoirs.append(entry)
 
     data = {
         "codeRome": code_rome,
         "metier": payload.get("metier") or {"code": code_rome},
         "competences": items[:80],
+        "savoirFaire": savoir_faire[:80],
+        "savoirs": savoirs[:80],
     }
     ROME_COMP_CACHE[code_rome] = {"data": data, "expires_at": time.time() + 21600}
     return data
