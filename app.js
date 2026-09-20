@@ -119,6 +119,7 @@ async function renderSkills(){
     const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/rome/competences?code_rome="+encodeURIComponent(job.code));
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.competences||[];
+    window.currentRomeSkillsData=data;
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune compétence ROME disponible pour ce métier.</div>';return}
     const evidence=(cv.competences_cv||[]).map(x=>String(x).trim()).filter(Boolean);
     const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\\s+/g," ").trim();
@@ -149,12 +150,13 @@ async function renderSkills(){
         : state==="mid"
           ? 'Indice partiel repéré dans le CV : « '+esc(proof)+' ». À préciser avec le candidat avant de considérer la compétence comme maîtrisée.'
           : "Compétence attendue par le métier : à vérifier avec le candidat. Elle ne doit pas être considérée comme acquise sans élément dans le CV.";
-      return '<div class="skill-row" data-skill-state="'+state+'"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
+      return '<div class="skill-row" data-skill-type="'+esc(item.type||"savoir_faire")+'" data-skill-state="'+state+'"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(item.libelle)+'</strong><p>'+note+'</p></div></div>';
     }).join("");
     document.getElementById("skillCountCheck").textContent=counts.check;
     document.getElementById("skillCountMid").textContent=counts.mid;
     document.getElementById("skillCountAsk").textContent=counts.ask;
     document.getElementById("skillCountAll").textContent=items.length;
+    applySkillsTab();
     document.querySelectorAll("[data-skill-filter]").forEach(btn=>{
       btn.classList.toggle("active",btn.dataset.skillFilter==="all");
       btn.onclick=()=>{
@@ -379,10 +381,13 @@ function applySkillsTab(){
   const intro=document.getElementById("skillsIntro");
   const labels={overview:"Vue d’ensemble des compétences ROME comparées au CV.",knowhow:"Savoir-faire professionnels associés au métier.",knowledge:"Savoirs associés au métier.",soft:"Savoir-être professionnels associés au métier.",transfer:"Compétences transférables à valoriser dans plusieurs contextes.",jobs:"Métiers proches à explorer à partir du profil."};
   if(intro)intro.textContent=labels[activeSkillsTab]||labels.overview;
+  document.querySelectorAll(".skills-tab-message").forEach(x=>x.remove());
   if(activeSkillsTab==="overview"){rows.forEach(r=>r.hidden=false);return}
+  if(activeSkillsTab==="knowhow"){rows.forEach(r=>r.hidden=r.dataset.skillType!=="savoir_faire");return}
+  if(activeSkillsTab==="knowledge"){rows.forEach(r=>r.hidden=r.dataset.skillType!=="savoir");return}
   if(activeSkillsTab==="transfer"){rows.forEach(r=>r.hidden=r.dataset.skillState!=="check");return}
-  if(activeSkillsTab==="jobs"){rows.forEach(r=>r.hidden=true);const list=document.getElementById("skillsList");if(list&&!list.querySelector(".skills-tab-message"))list.insertAdjacentHTML("afterbegin",'<div class="skills-tab-message">La recherche de métiers proches du logiciel sera raccordée au référentiel ROME dans le prochain bloc de migration.</div>');return}
-  rows.forEach(r=>r.hidden=false);
+  if(activeSkillsTab==="soft"){rows.forEach(r=>r.hidden=true);const list=document.getElementById("skillsList");if(list)list.insertAdjacentHTML("afterbegin",'<div class="skills-tab-message">Les savoir-être ne sont pas déduits automatiquement du CV. Ils doivent être vérifiés avec le candidat avant d’être retenus.</div>');return}
+  if(activeSkillsTab==="jobs"){rows.forEach(r=>r.hidden=true);const list=document.getElementById("skillsList");if(list)list.insertAdjacentHTML("afterbegin",'<div class="skills-tab-message">Les métiers proches seront proposés uniquement à partir de données ROME officielles vérifiées. Aucune suggestion n’est inventée à partir du CV.</div>');return}
 }
 document.querySelectorAll("[data-skills-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".skills-tab-message").forEach(x=>x.remove());activeSkillsTab=b.dataset.skillsTab;applySkillsTab()}));
 
