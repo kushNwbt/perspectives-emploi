@@ -345,7 +345,7 @@ document.getElementById("planBackHome").addEventListener("click",openHome);
 document.getElementById("newSessionBtn").addEventListener("click",()=>{
   const hasData=sessionStorage.getItem("perspectives_cv_analysis")||sessionStorage.getItem("perspectives_target_job")||sessionStorage.getItem("perspectives_compare_offers");
   if(hasData&&!window.confirm("Démarrer une nouvelle analyse ? Le CV, le métier et les offres sélectionnées de cette session seront retirés."))return;
-  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers","perspectives_offers_commune"].forEach(k=>sessionStorage.removeItem(k));
+  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers","perspectives_offers_commune","perspectives_offers_contract"].forEach(k=>sessionStorage.removeItem(k));
   if(typeof selectedJob!=="undefined") selectedJob=null;
   const jobInput=document.getElementById("jobInput");if(jobInput)jobInput.value="";
   openHome();window.scrollTo({top:0,behavior:"smooth"});
@@ -393,8 +393,26 @@ document.querySelectorAll("[data-skills-tab]").forEach(b=>b.addEventListener("cl
 
 const offersContract=document.getElementById("offersContract");if(offersContract){offersContract.value=sessionStorage.getItem("perspectives_offers_contract")||"";offersContract.addEventListener("change",()=>{if(offersContract.value)sessionStorage.setItem("perspectives_offers_contract",offersContract.value);else sessionStorage.removeItem("perspectives_offers_contract")})}
 
+// Une actualisation navigateur démarre une session de travail propre :
+// la navigation interne conserve les données, mais F5 ne recharge pas un ancien dossier candidat.
+try{
+  const navEntry=performance.getEntriesByType("navigation")[0];
+  if(navEntry&&navEntry.type==="reload"){
+    ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers","perspectives_offers_commune","perspectives_offers_contract"].forEach(k=>sessionStorage.removeItem(k));
+    if(typeof selectedJob!=="undefined")selectedJob=null;
+  }
+}catch(e){}
+
 // Parité logiciel : fil de parcours persistant entre les modules.
 const journeyBar=document.getElementById("journeyBar");
 const journeyOpeners={cv:openCvView,skills:openSkillsView,offers:openOffersView,comparison:openComparisonView,training:openTrainingView,plan:openPlanView};
 function updateJourney(active){if(!journeyBar)return;journeyBar.hidden=!active;document.querySelectorAll("[data-journey]").forEach(b=>{b.classList.toggle("active",b.dataset.journey===active);b.onclick=()=>journeyOpeners[b.dataset.journey]?.()})}
 [["openCvView","cv"],["openSkillsView","skills"],["openOffersView","offers"],["openComparisonView","comparison"],["openTrainingView","training"],["openPlanView","plan"]].forEach(([name,key])=>{const original=window[name];if(typeof original==="function")window[name]=function(){original();updateJourney(key)}});
+
+// Synchronisation fiable du fil de parcours, y compris pour les écouteurs déjà enregistrés.
+const journeyViewMap={cvDiagnostic:"cv",skillsView:"skills",offersView:"offers",comparisonView:"comparison",trainingView:"training",planView:"plan"};
+const journeyObserver=new MutationObserver(()=>{
+  const visible=Object.entries(journeyViewMap).find(([id])=>{const el=document.getElementById(id);return el&&!el.hidden});
+  if(visible)updateJourney(visible[1]);else if(journeyBar)journeyBar.hidden=true;
+});
+Object.keys(journeyViewMap).forEach(id=>{const el=document.getElementById(id);if(el)journeyObserver.observe(el,{attributes:true,attributeFilter:["hidden"]})});
