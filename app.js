@@ -60,6 +60,7 @@ function renderCvDiagnostic(){
   const priorities=document.getElementById("diagPriorities"); priorities.innerHTML="";
   (a.priorites||[]).forEach(p=>{const cls=(p.niveau||"").toLowerCase().includes("bon")?"good":(p.niveau||"").toLowerCase().includes("prior")?"bad":"warn";priorities.insertAdjacentHTML("beforeend",'<div class="priority-card '+cls+'"><span>'+esc(p.niveau)+'</span><h4>'+esc(p.titre)+'</h4><p><b>👉 À faire :</b> '+esc(p.conseil)+'</p></div>')});
 }
+function cvSectionAdvice(name,ok){const map={Expériences:["Décrire les postes, structures, dates et missions principales.","Les expériences sont repérées dans le document."],Compétences:["Créer une rubrique lisible avec les savoir-faire réellement maîtrisés.","Une rubrique de compétences est repérée."],Formation:["Indiquer les diplômes, titres et certifications utiles avec leurs dates.","La formation est repérée."],Coordonnées:["Ajouter un téléphone ou une adresse e-mail professionnelle clairement visible.","Un moyen de contact est repéré."]};const m=map[name]||["À vérifier avec le candidat.","Élément repéré."];return ok?m[1]:m[0]}
 function openCvView(){
   hideAllViews(); cvDiagnostic.hidden=false; renderCvDiagnostic(); window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#cv"]'); if(link)link.classList.add("active");
