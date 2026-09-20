@@ -115,6 +115,14 @@ def analyse_cv(text: str) -> Dict:
         priorities.append({"niveau":"À améliorer","titre":"Relier les compétences aux expériences","conseil":"Associez les compétences importantes à des expériences ou réalisations qui permettent de les illustrer concrètement."})
     if sections["Formation"]:
         priorities.append({"niveau":"Bon","titre":"Valoriser les formations utiles","conseil":"Conservez en priorité les diplômes, titres et certifications utiles au projet professionnel visé."})
+    if sections["Coordonnées"]:
+        priorities.append({"niveau":"Bon","titre":"Coordonnées repérées","conseil":"Les coordonnées sont détectées. Vérifiez qu’elles restent simples à repérer et à jour."})
+    else:
+        priorities.append({"niveau":"Prioritaire","titre":"Rendre les coordonnées visibles","conseil":"Ajoutez au minimum un moyen de contact professionnel clairement identifiable."})
+    if len(compact) > 2600:
+        priorities.append({"niveau":"À améliorer","titre":"Alléger les informations","conseil":"Le CV est assez dense. Hiérarchisez les informations et gardez en priorité celles qui servent le projet visé."})
+    elif len(compact) < 700:
+        priorities.append({"niveau":"À améliorer","titre":"Enrichir le contenu utile","conseil":"Le contenu détecté est court. Vérifiez que les expériences, missions et compétences importantes sont suffisamment détaillées."})
     if not priorities:
         priorities.append({"niveau":"Bon","titre":"Structure principale repérée","conseil":"Conservez les rubriques clairement identifiables et vérifiez que chaque expérience décrit des missions concrètes."})
 
@@ -122,7 +130,7 @@ def analyse_cv(text: str) -> Dict:
         "score": score,
         "statut": "Bon" if score >= 75 else "À renforcer" if score >= 55 else "Prioritaire",
         "sections": sections,
-        "priorites": priorities[:4],
+        "priorites": priorities[:6],
         "meta": {"caracteres": len(text), "mots": len(text.split())},
         "avertissement": "Diagnostic pédagogique fondé sur les éléments détectés dans le CV. Il ne garantit pas le passage d’un ATS ni un recrutement.",
         "competences_cv": extract_cv_skill_evidence(text)
