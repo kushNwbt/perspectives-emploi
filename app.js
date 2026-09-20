@@ -353,6 +353,9 @@ function openPlanView(){
 }
 document.querySelectorAll('[data-view="plan"],.sidebar a[href="#plan"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openPlanView()}));
 document.getElementById("planBackHome").addEventListener("click",openHome);
+document.getElementById("planOpenTraining")?.addEventListener("click",openTrainingView);
+document.getElementById("planOpenMarket")?.addEventListener("click",openMarketView);
+document.getElementById("planPrint")?.addEventListener("click",()=>window.print());
 
 
 document.getElementById("newSessionBtn").addEventListener("click",()=>{
