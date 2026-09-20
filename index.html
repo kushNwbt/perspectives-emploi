@@ -4,15 +4,10 @@
 <meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Perspectives Emploi</title>
 <meta name="description" content="Perspectives Emploi — Votre profil, vos compétences, vos opportunités.">
-<link rel="stylesheet" href="style.css?v=1.0.0">
+<link rel="stylesheet" href="style.css?v=1.1.0">
 </head>
-<body>
-<header class="topbar">
-  <div class="rf"><strong>RÉPUBLIQUE<br>FRANÇAISE</strong><small>Liberté · Égalité · Fraternité</small></div>
-  <div class="ft"><span class="ft-mark">◢</span><strong>france<br>travail</strong></div>
-  <div class="product"><strong>Perspectives Emploi</strong><span>Votre profil, vos compétences, vos opportunités</span></div>
-  <span class="version">Version web · V6.24.5</span>
-</header>
+<body class="outil-agent">
+<header class="topbar"><img class="official-brand" src="assets/brand-header.svg" alt="République Française et France Travail"><div class="product"><strong>Perspectives Emploi</strong><span>Votre profil, vos compétences, vos opportunités</span></div><span class="version">Version web · V1.1</span></header>
 <div class="app">
 <aside class="sidebar">
   <nav>
@@ -24,7 +19,8 @@
     <a href="#formations">▣ <span>Formations</span></a>
     <a href="#marche">▥ <span>Marché du travail</span></a>
     <a href="#plan">✓ <span>Plan d’action</span></a>
-  <button id="newSessionBtn" class="new-session-btn" type="button">＋ Nouvelle analyse</button>\n    </nav>
+  <button id="newSessionBtn" class="new-session-btn" type="button">＋ Nouvelle analyse</button>
+    </nav>
   <div class="api-link">⚙ <span>Connexion API</span></div>
 </aside>
 <main id="accueil">
@@ -96,7 +92,7 @@
   <section id="offersView" class="diagnostic-view" hidden>
     <div class="diag-head"><div><span class="eyebrow dark">OFFRES D’EMPLOI</span><h2>Explorer les opportunités</h2><p>Offres France Travail correspondant au métier ROME sélectionné.</p></div><button id="offersBackHome" type="button">← Retour à l’accueil</button></div>
     <div id="offersEmpty" class="diag-empty"></div>
-    <div id="offersContent" hidden><div id="offersTarget" class="skills-target"></div><div id="offersSelectionSummary" class="offers-selection-summary" hidden></div><div class="offers-filters"><label for="offersCommune">Commune <span>optionnel</span></label><div><input id="offersCommune" type="text" maxlength="100" placeholder="Ex. Trappes, Versailles…"><button id="offersClearCommune" class="secondary-filter-btn" type="button" hidden>Effacer</button><button id="offersSearch" type="button">Rechercher</button></div><p>Sans commune, la recherche reste nationale.</p></div><div id="offersList" class="skills-list"></div></div>
+    <div id="offersContent" hidden><div id="offersTarget" class="skills-target"></div><div id="offersSelectionSummary" class="offers-selection-summary" hidden></div><div class="offers-filters"><div class="geo-fields"><label>Zone de recherche<select id="offersZoneType"><option value="national">France entière</option><option value="region">Région</option><option value="departement">Département</option><option value="commune">Ville / commune</option></select></label><label id="offersZoneValueWrap" hidden>Localisation<input id="offersZoneValue" type="text" maxlength="100" placeholder="Ex. Versailles, 78, Île-de-France…"></label><label id="offersDistanceWrap" hidden>Rayon autour de la ville<select id="offersDistance"><option value="0">Ville uniquement</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="30">30 km</option><option value="50">50 km</option></select></label></div><div class="geo-actions"><button id="offersClearGeo" class="secondary-filter-btn" type="button">Réinitialiser</button><button id="offersSearch" type="button">Rechercher</button></div><p>Pour une ville, le rayon permet d’élargir la recherche autour de la commune. Région et département peuvent être saisis par nom ou code.</p></div><div id="offersList" class="skills-list"></div></div>
   </section>
   <section id="skillsView" class="diagnostic-view" hidden>
     <div class="diag-head"><div><span class="eyebrow dark">COMPÉTENCES & MÉTIERS</span><h2>Mettre en perspective votre profil</h2><p id="skillsIntro">Sélectionnez un métier visé pour comparer le CV avec le référentiel ROME.</p></div><button id="skillsBackHome" type="button">← Retour à l’accueil</button></div>
@@ -120,5 +116,5 @@
   <footer><strong>Perspectives Emploi</strong><span>Projet en cours de développement · Données France Travail selon les services disponibles</span></footer>
 </main>
 </div>
-<script src="app.js?v=1.0.0"></script>
+<script src="app.js?v=1.1.0"></script>
 </body></html>
