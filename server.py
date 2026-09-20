@@ -336,12 +336,16 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
 
 
 @app.get("/api/offres")
-async def offres_emploi(code_rome: str = Query(..., min_length=5, max_length=5), commune: str = Query("", max_length=100), type_contrat: str = Query("", max_length=10)):
+async def offres_emploi(code_rome: str = Query(..., min_length=5, max_length=5), commune: str = Query("", max_length=100), departement: str = Query("", max_length=3), distance: int = Query(0, ge=0, le=100), type_contrat: str = Query("", max_length=10)):
     token = await france_travail_token()
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     params = {"codeROME": code_rome.upper().strip(), "range": "0-19"}
     if commune.strip():
         params["commune"] = commune.strip()
+        if distance:
+            params["distance"] = distance
+    elif departement.strip():
+        params["departement"] = departement.strip()
     if type_contrat.strip():
         params["typeContrat"] = type_contrat.strip().upper()
     url = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
