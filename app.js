@@ -368,3 +368,18 @@ document.getElementById("comparisonClearOffers").addEventListener("click",()=>{c
 const offersZoneType=document.getElementById("offersZoneType"),offersRadius=document.getElementById("offersRadius"),offersZone=document.getElementById("offersZone");
 function syncGeoControls(){const t=offersZoneType.value;offersZone.disabled=t==="national";offersRadius.disabled=t!=="commune";if(t==="national"){offersZone.value="";offersRadius.value=""}offersZone.placeholder=t==="region"?"Ex. Île-de-France":t==="departement"?"Ex. Yvelines":"Ex. Trappes, Versailles…"}
 offersZoneType.addEventListener("change",syncGeoControls);syncGeoControls();
+
+// Parité logiciel : navigation interne de Compétences & métiers.
+let activeSkillsTab="overview";
+function applySkillsTab(){
+  document.querySelectorAll("[data-skills-tab]").forEach(b=>b.classList.toggle("active",b.dataset.skillsTab===activeSkillsTab));
+  const rows=[...document.querySelectorAll("#skillsList .skill-row")];
+  const intro=document.getElementById("skillsIntro");
+  const labels={overview:"Vue d’ensemble des compétences ROME comparées au CV.",knowhow:"Savoir-faire professionnels associés au métier.",knowledge:"Savoirs associés au métier.",soft:"Savoir-être professionnels associés au métier.",transfer:"Compétences transférables à valoriser dans plusieurs contextes.",jobs:"Métiers proches à explorer à partir du profil."};
+  if(intro)intro.textContent=labels[activeSkillsTab]||labels.overview;
+  if(activeSkillsTab==="overview"){rows.forEach(r=>r.hidden=false);return}
+  if(activeSkillsTab==="transfer"){rows.forEach(r=>r.hidden=r.dataset.skillState!=="check");return}
+  if(activeSkillsTab==="jobs"){rows.forEach(r=>r.hidden=true);const list=document.getElementById("skillsList");if(list&&!list.querySelector(".skills-tab-message"))list.insertAdjacentHTML("afterbegin",'<div class="skills-tab-message">La recherche de métiers proches du logiciel sera raccordée au référentiel ROME dans le prochain bloc de migration.</div>');return}
+  rows.forEach(r=>r.hidden=false);
+}
+document.querySelectorAll("[data-skills-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".skills-tab-message").forEach(x=>x.remove());activeSkillsTab=b.dataset.skillsTab;applySkillsTab()}));
