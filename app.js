@@ -61,7 +61,7 @@ function renderCvDiagnostic(){
   (a.priorites||[]).forEach(p=>{const cls=(p.niveau||"").toLowerCase().includes("bon")?"good":(p.niveau||"").toLowerCase().includes("prior")?"bad":"warn";priorities.insertAdjacentHTML("beforeend",'<div class="priority-card '+cls+'"><span>'+esc(p.niveau)+'</span><h4>'+esc(p.titre)+'</h4><p><b>👉 À faire :</b> '+esc(p.conseil)+'</p></div>')});
 }
 function openCvView(){
-  homeSections.forEach(x=>x.hidden=true); cvDiagnostic.hidden=false; renderCvDiagnostic(); window.scrollTo({top:0,behavior:"smooth"});
+  hideAllViews(); cvDiagnostic.hidden=false; renderCvDiagnostic(); window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#cv"]'); if(link)link.classList.add("active");
 }
 function renderSessionSummary(){
@@ -74,6 +74,7 @@ function renderSessionSummary(){
   document.getElementById("sessionContinue").addEventListener("click",()=>{if(offers.length&&cv)return openComparisonView();if(job)return openOffersView();if(cv)return openSkillsView();openCvDiagnostic()});
 }
 
+function hideAllViews(){document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);homeSections.forEach(x=>x.hidden=true)}
 function openHome(){renderSessionSummary();
   document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true); homeSections.forEach(x=>x.hidden=false); window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active")); const link=document.querySelector('.sidebar a[href="#accueil"]'); if(link)link.classList.add("active");
@@ -141,7 +142,6 @@ async function renderSkills(){
       const proof=match.proof;
       const state=match.level||"ask";
       counts[state]++;
-      counts[state]++;
       const symbol=state==="check"?"✓":state==="mid"?"△":"?";
       const note=state==="check"
         ? 'Élément proche repéré dans le CV : « '+esc(proof)+' ». À confirmer dans son contexte.'
@@ -167,7 +167,7 @@ async function renderSkills(){
   }
 }
 function openSkillsView(){
-  homeSections.forEach(x=>x.hidden=true);cvDiagnostic.hidden=true;skillsView.hidden=false;renderSkills();window.scrollTo({top:0,behavior:"smooth"});
+  hideAllViews(); skillsView.hidden=false;renderSkills();window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#competences"]');if(link)link.classList.add("active");
 }
 document.querySelectorAll('[data-view="skills"],.sidebar a[href="#competences"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openSkillsView()}));
@@ -181,7 +181,9 @@ async function renderOffers(){
   if(selectedOffers.length){selectionSummary.hidden=false;selectionSummary.innerHTML='<strong>'+selectedOffers.length+' offre'+(selectedOffers.length>1?'s':'')+' sélectionnée'+(selectedOffers.length>1?'s':'')+'</strong> sur 5 pour comparaison <button id="offersGoComparison" type="button">Voir la comparaison →</button>';document.getElementById("offersGoComparison").addEventListener("click",openComparisonView)}else{selectionSummary.hidden=true;selectionSummary.innerHTML=""}
 
   const empty=document.getElementById("offersEmpty"),content=document.getElementById("offersContent"),list=document.getElementById("offersList"),target=document.getElementById("offersTarget");
-  const communeInput=document.getElementById("offersCommune");
+  const communeInput=document.getElementById("offersZone");
+  const zoneType=document.getElementById("offersZoneType");
+  const radius=document.getElementById("offersRadius");
   if(communeInput&&!communeInput.value) communeInput.value=sessionStorage.getItem("perspectives_offers_commune")||"";
   let job=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
   if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour rechercher des offres.";return}
@@ -189,7 +191,7 @@ async function renderOffers(){
   target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
   list.innerHTML='<div class="rome-loading">Recherche des offres France Travail…</div>';
   try{
-    const commune=(document.getElementById("offersCommune").value||"").trim();
+    const commune=(document.getElementById("offersZone").value||"").trim();
     if(commune) sessionStorage.setItem("perspectives_offers_commune",commune); else sessionStorage.removeItem("perspectives_offers_commune");
     const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):""));
     if(!r.ok)throw new Error();
@@ -212,7 +214,7 @@ async function renderOffers(){
   }catch(e){list.innerHTML='<div class="rome-loading">Les offres France Travail sont momentanément indisponibles.</div>'}
 }
 function openOffersView(){
-  homeSections.forEach(x=>x.hidden=true);cvDiagnostic.hidden=true;skillsView.hidden=true;offersView.hidden=false;renderOffers();window.scrollTo({top:0,behavior:"smooth"});
+  hideAllViews(); offersView.hidden=false;renderOffers();window.scrollTo({top:0,behavior:"smooth"});
   document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));const link=document.querySelector('.sidebar a[href="#offres"]');if(link)link.classList.add("active");
 }
 document.querySelectorAll('[data-view="offers"],.sidebar a[href="#offres"]').forEach(el=>el.addEventListener("click",e=>{e.preventDefault();openOffersView()}));
@@ -346,9 +348,9 @@ document.getElementById("newSessionBtn").addEventListener("click",()=>{
 });
 
 document.getElementById("offersSearch").addEventListener("click",renderOffers);
-document.getElementById("offersCommune").addEventListener("keydown",e=>{if(e.key==="Enter")renderOffers()});
+document.getElementById("offersZone").addEventListener("keydown",e=>{if(e.key==="Enter")renderOffers()});
 
-const offersCommuneInput=document.getElementById("offersCommune");
+const offersCommuneInput=document.getElementById("offersZone");
 const offersClearCommune=document.getElementById("offersClearCommune");
 function syncOffersClear(){offersClearCommune.hidden=!offersCommuneInput.value.trim()}
 offersCommuneInput.addEventListener("input",syncOffersClear);
@@ -362,3 +364,7 @@ document.getElementById("comparisonReviewCv").addEventListener("click",openCvDia
 document.getElementById("comparisonReviewSkills").addEventListener("click",openSkillsView);
 
 document.getElementById("comparisonClearOffers").addEventListener("click",()=>{const current=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");if(!current.length)return;if(confirm("Vider les offres sélectionnées pour la comparaison ?")){sessionStorage.removeItem("perspectives_compare_offers");renderComparison()}});
+
+const offersZoneType=document.getElementById("offersZoneType"),offersRadius=document.getElementById("offersRadius"),offersZone=document.getElementById("offersZone");
+function syncGeoControls(){const t=offersZoneType.value;offersZone.disabled=t==="national";offersRadius.disabled=t!=="commune";if(t==="national"){offersZone.value="";offersRadius.value=""}offersZone.placeholder=t==="region"?"Ex. Île-de-France":t==="departement"?"Ex. Yvelines":"Ex. Trappes, Versailles…"}
+offersZoneType.addEventListener("change",syncGeoControls);syncGeoControls();
