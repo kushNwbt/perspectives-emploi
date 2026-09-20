@@ -278,7 +278,11 @@ function renderTraining(){
   if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour rechercher une formation.";return}
   empty.hidden=true;content.hidden=false;
   target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
-  open.href="https://candidat.francetravail.fr/formations/recherche?quoi="+encodeURIComponent(job.libelle);
+  const zone=document.getElementById("trainingZone"),summary=document.getElementById("trainingSearchSummary");
+  if(zone&&!zone.value)zone.value=sessionStorage.getItem("perspectives_training_zone")||sessionStorage.getItem("perspectives_offers_commune")||"";
+  const territory=(zone?.value||"").trim();
+  open.href="https://candidat.francetravail.fr/formations/recherche?quoi="+encodeURIComponent(job.libelle)+(territory?"&ou="+encodeURIComponent(territory):"");
+  if(summary)summary.textContent=territory?"Recherche préparée pour « "+job.libelle+" » autour de "+territory+".":"Recherche préparée pour « "+job.libelle+" ». Vous pourrez préciser le lieu dans le catalogue France Travail.";
 }
 function openTrainingView(){
   homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);trainingView.hidden=false;renderTraining();window.scrollTo({top:0,behavior:"smooth"});
@@ -288,6 +292,12 @@ document.querySelectorAll('[data-view="training"],.sidebar a[href="#formations"]
 document.getElementById("trainingBackHome").addEventListener("click",openHome);
 document.getElementById("trainingOpenSkills").addEventListener("click",openSkillsView);
 document.getElementById("trainingOpenPlan").addEventListener("click",openPlanView);
+const trainingZone=document.getElementById("trainingZone"),trainingClearZone=document.getElementById("trainingClearZone");
+if(trainingZone){
+  trainingZone.addEventListener("change",()=>{const v=trainingZone.value.trim();if(v)sessionStorage.setItem("perspectives_training_zone",v);else sessionStorage.removeItem("perspectives_training_zone");renderTraining()});
+  trainingZone.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();trainingZone.blur();}});
+}
+if(trainingClearZone)trainingClearZone.addEventListener("click",()=>{trainingZone.value="";sessionStorage.removeItem("perspectives_training_zone");renderTraining()});
 
 
 const marketView=document.getElementById("marketView");
@@ -345,7 +355,7 @@ document.getElementById("planBackHome").addEventListener("click",openHome);
 document.getElementById("newSessionBtn").addEventListener("click",()=>{
   const hasData=sessionStorage.getItem("perspectives_cv_analysis")||sessionStorage.getItem("perspectives_target_job")||sessionStorage.getItem("perspectives_compare_offers");
   if(hasData&&!window.confirm("Démarrer une nouvelle analyse ? Le CV, le métier et les offres sélectionnées de cette session seront retirés."))return;
-  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers","perspectives_offers_commune","perspectives_offers_contract"].forEach(k=>sessionStorage.removeItem(k));
+  ["perspectives_cv_analysis","perspectives_target_job","perspectives_compare_offers","perspectives_offers_commune","perspectives_offers_contract","perspectives_training_zone"].forEach(k=>sessionStorage.removeItem(k));
   if(typeof selectedJob!=="undefined") selectedJob=null;
   const jobInput=document.getElementById("jobInput");if(jobInput)jobInput.value="";
   openHome();window.scrollTo({top:0,behavior:"smooth"});
