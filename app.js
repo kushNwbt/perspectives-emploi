@@ -197,7 +197,7 @@ async function renderOffers(){
     const commune=(document.getElementById("offersZone").value||"").trim();
     const contract=(document.getElementById("offersContract")?.value||"").trim();
     if(commune) sessionStorage.setItem("perspectives_offers_commune",commune); else sessionStorage.removeItem("perspectives_offers_commune");
-    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+(commune?"&commune="+encodeURIComponent(commune):"")+(contract?"&type_contrat="+encodeURIComponent(contract):""));
+    const geoType=zoneType?.value||"commune";\n    const distanceValue=parseInt(radius?.value||"0",10)||0;\n    let geoQuery="";\n    if(geoType==="commune"&&commune)geoQuery="&commune="+encodeURIComponent(commune)+(distanceValue?"&distance="+encodeURIComponent(distanceValue):"");\n    else if(geoType==="departement"&&commune)geoQuery="&departement="+encodeURIComponent(commune);\n    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+geoQuery+(contract?"&type_contrat="+encodeURIComponent(contract):""));
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier'+(commune?' dans la zone « '+esc(commune)+' »':'')+'. '+(commune?'Essayez une autre commune ou videz le filtre pour élargir la recherche.':'Vous pouvez réessayer plus tard ou modifier le métier ciblé.')+'</div>';return}
@@ -371,7 +371,7 @@ document.getElementById("comparisonClearOffers").addEventListener("click",()=>{c
 
 const offersZoneType=document.getElementById("offersZoneType"),offersRadius=document.getElementById("offersRadius"),offersZone=document.getElementById("offersZone");
 function syncGeoControls(){const t=offersZoneType.value;offersZone.disabled=t==="national";offersRadius.disabled=t!=="commune";if(t==="national"){offersZone.value="";offersRadius.value=""}offersZone.placeholder=t==="region"?"Ex. Île-de-France":t==="departement"?"Ex. Yvelines":"Ex. Trappes, Versailles…"}
-offersZoneType.addEventListener("change",syncGeoControls);syncGeoControls();
+offersZoneType.addEventListener("change",syncGeoControls);syncGeoControls();\nif(offersRadius)offersRadius.addEventListener("change",()=>{if(offersZoneType.value==="commune"&&offersZone.value.trim())renderOffers()});
 
 // Parité logiciel : navigation interne de Compétences & métiers.
 let activeSkillsTab="overview";
