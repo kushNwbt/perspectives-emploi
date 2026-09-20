@@ -106,6 +106,15 @@ def analyse_cv(text: str) -> Dict:
         priorities.append({"niveau":"À améliorer","titre":"Rendre les compétences visibles","conseil":"Ajoutez une rubrique Compétences avec des savoir-faire réellement maîtrisés et vérifiables."})
     if not sections["Formation"]:
         priorities.append({"niveau":"À améliorer","titre":"Structurer la formation","conseil":"Présentez les diplômes, titres ou certifications avec leur intitulé et leur date."})
+    # Compléter le diagnostic avec des conseils utiles même lorsque les rubriques
+    # principales sont détectées. Ces conseils restent pédagogiques et ne prétendent
+    # pas évaluer la qualité réelle du contenu sans preuve textuelle suffisante.
+    if sections["Expériences"] and len(compact) < 1400:
+        priorities.append({"niveau":"À améliorer","titre":"Détailler les expériences","conseil":"Vérifiez que les expériences principales précisent les missions réalisées, le contexte et, lorsque c’est pertinent, des résultats concrets."})
+    if sections["Compétences"]:
+        priorities.append({"niveau":"À améliorer","titre":"Relier les compétences aux expériences","conseil":"Associez les compétences importantes à des expériences ou réalisations qui permettent de les illustrer concrètement."})
+    if sections["Formation"]:
+        priorities.append({"niveau":"Bon","titre":"Valoriser les formations utiles","conseil":"Conservez en priorité les diplômes, titres et certifications utiles au projet professionnel visé."})
     if not priorities:
         priorities.append({"niveau":"Bon","titre":"Structure principale repérée","conseil":"Conservez les rubriques clairement identifiables et vérifiez que chaque expérience décrit des missions concrètes."})
 
@@ -113,7 +122,7 @@ def analyse_cv(text: str) -> Dict:
         "score": score,
         "statut": "Bon" if score >= 75 else "À renforcer" if score >= 55 else "Prioritaire",
         "sections": sections,
-        "priorites": priorities[:3],
+        "priorites": priorities[:4],
         "meta": {"caracteres": len(text), "mots": len(text.split())},
         "avertissement": "Diagnostic pédagogique fondé sur les éléments détectés dans le CV. Il ne garantit pas le passage d’un ATS ni un recrutement.",
         "competences_cv": extract_cv_skill_evidence(text)
