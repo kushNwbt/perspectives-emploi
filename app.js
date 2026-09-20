@@ -387,3 +387,9 @@ function applySkillsTab(){
 document.querySelectorAll("[data-skills-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".skills-tab-message").forEach(x=>x.remove());activeSkillsTab=b.dataset.skillsTab;applySkillsTab()}));
 
 const offersContract=document.getElementById("offersContract");if(offersContract){offersContract.value=sessionStorage.getItem("perspectives_offers_contract")||"";offersContract.addEventListener("change",()=>{if(offersContract.value)sessionStorage.setItem("perspectives_offers_contract",offersContract.value);else sessionStorage.removeItem("perspectives_offers_contract")})}
+
+// Parité logiciel : fil de parcours persistant entre les modules.
+const journeyBar=document.getElementById("journeyBar");
+const journeyOpeners={cv:openCvView,skills:openSkillsView,offers:openOffersView,comparison:openComparisonView,training:openTrainingView,plan:openPlanView};
+function updateJourney(active){if(!journeyBar)return;journeyBar.hidden=!active;document.querySelectorAll("[data-journey]").forEach(b=>{b.classList.toggle("active",b.dataset.journey===active);b.onclick=()=>journeyOpeners[b.dataset.journey]?.()})}
+[["openCvView","cv"],["openSkillsView","skills"],["openOffersView","offers"],["openComparisonView","comparison"],["openTrainingView","training"],["openPlanView","plan"]].forEach(([name,key])=>{const original=window[name];if(typeof original==="function")window[name]=function(){original();updateJourney(key)}});
