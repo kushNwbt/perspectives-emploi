@@ -32,7 +32,9 @@ async function handleFile(file){
     if(!response.ok) throw new Error("HTTP "+response.status);
     const result=await response.json();
     sessionStorage.setItem("perspectives_cv_analysis",JSON.stringify(result));
-    showStatus("CV analysé avec succès. Le diagnostic est disponible dans Mon CV.","ok");
+    showStatus("CV analysé avec succès. Ouverture du diagnostic…","ok");
+    renderSessionSummary();
+    setTimeout(()=>openCvDiagnostic(),250);
   }catch(e){
     showStatus("Impossible de joindre le serveur d’analyse. Le CV n’a pas été envoyé.","error");
   }finally{choose.disabled=false;}
