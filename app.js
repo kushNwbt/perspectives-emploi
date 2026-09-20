@@ -307,7 +307,10 @@ async function renderMarket(){
   if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour explorer son marché du travail.";return}
   empty.hidden=true;content.hidden=false;target.innerHTML='<span>Métier analysé</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';count.textContent="…";
   link.href="https://www.francetravail.fr/candidat/recherche-emploi.html?motsCles="+encodeURIComponent(job.libelle);
-  try{const r=await fetch(API_BASE+"/api/offres?code_rome="+encodeURIComponent(job.code));if(!r.ok)throw new Error();const data=await r.json();const offers=Array.isArray(data)?data:(data.offres||[]);count.textContent=offers.length;}catch(e){count.textContent="Indisponible";}
+  try{const r=await fetch(API_BASE+"/api/offres?code_rome="+encodeURIComponent(job.code));if(!r.ok)throw new Error();const data=await r.json();const offers=Array.isArray(data)?data:(data.offres||[]);count.textContent=offers.length;
+    const signals=document.getElementById("marketOfferSignals");
+    if(signals){const contracts={};const places={};offers.forEach(o=>{const c=(o.typeContrat||"Non précisé").trim();contracts[c]=(contracts[c]||0)+1;const p=(o.lieu||"Non précisé").trim();places[p]=(places[p]||0)+1});const topContracts=Object.entries(contracts).sort((a,b)=>b[1]-a[1]).slice(0,3);const topPlaces=Object.entries(places).sort((a,b)=>b[1]-a[1]).slice(0,3);signals.innerHTML='<p><b>Contrats dans cet échantillon :</b> '+(topContracts.map(([k,v])=>esc(k)+' ('+v+')').join(" · ")||"—")+'</p><p><b>Localisations les plus présentes :</b> '+(topPlaces.map(([k,v])=>esc(k)+' ('+v+')').join(" · ")||"—")+'</p>';}}
+  catch(e){count.textContent="Indisponible";const signals=document.getElementById("marketOfferSignals");if(signals)signals.innerHTML="";}
 }
 function openMarketView(){
   homeSections.forEach(x=>x.hidden=true);document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);marketView.hidden=false;renderMarket();window.scrollTo({top:0,behavior:"smooth"});
