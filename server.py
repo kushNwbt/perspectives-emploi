@@ -35,7 +35,7 @@ def extract_text(name: str, raw: bytes) -> str:
     if ext == "pdf":
         from pypdf import PdfReader
         reader = PdfReader(io.BytesIO(raw))
-        return "\n".join((p.extract_text() or "") for p in reader.pages)
+        return "\n".join((p.extract_text() or "") for p in reader.pages).replace("\x00", "")
     if ext == "docx":
         from docx import Document
         doc = Document(io.BytesIO(raw))
@@ -50,7 +50,7 @@ def extract_cv_skill_evidence(text: str) -> List[str]:
     """Conserve des indices courts réellement présents dans le CV, sans renvoyer le texte brut."""
     lines = [re.sub(r"\\s+", " ", line).strip(" •·▪-–—\\t") for line in text.splitlines()]
     lines = [line for line in lines if 3 <= len(line) <= 140]
-    section_words = ("compétence", "competence", "savoir-faire", "skills")
+    section_words = ("compétence", "competence", "savoir-faire", "skills", "atouts")
     stop_words = ("formation", "diplôme", "diplome", "langue", "centre d'intérêt", "profil", "coordonnée")
     action_words = (
         "accompagn", "accueill", "orient", "conseill", "anim", "organis", "coordonn",
@@ -89,7 +89,7 @@ def analyse_cv(text: str) -> Dict:
     compact = re.sub(r"\s+", " ", text).strip()
     sections = {
         "Expériences": has_any(text, ["expérience", "experiences", "parcours professionnel", "emploi"]),
-        "Compétences": has_any(text, ["compétence", "competences", "savoir-faire", "skills"]),
+        "Compétences": has_any(text, ["compétence", "competences", "savoir-faire", "skills", "atouts"]),
         "Formation": has_any(text, ["formation", "diplôme", "diplome", "certification"]),
         "Coordonnées": bool(re.search(r"[\w.+-]+@[\w.-]+\.\w+", text)) or bool(re.search(r"(?:\+33|0)[1-9](?:[ .-]?\d{2}){4}", text)),
     }
@@ -98,6 +98,10 @@ def analyse_cv(text: str) -> Dict:
     if len(compact) > 700: score += 10
     if len(compact) > 1400: score += 10
     score = min(score, 95)
+    if not sections["Expériences"] or not sections["Coordonnées"]:
+        score = min(score, 64)
+    elif not sections["Compétences"] or not sections["Formation"]:
+        score = min(score, 74)
 
     priorities = []
     if not sections["Expériences"]:
@@ -335,21 +339,43 @@ async def rome_competences(code_rome: str = Query(..., min_length=5, max_length=
     return data
 
 
+async def resolve_geo_code(client: httpx.AsyncClient, kind: str, value: str) -> str:
+    value = value.strip()
+    if not value:
+        return ""
+    if kind == "commune" and re.fullmatch(r"\\d{5}", value):
+        return value
+    if kind == "departement" and re.fullmatch(r"(?:\\d{2,3}|2[ABab])", value):
+        return value.upper()
+    if kind == "region" and re.fullmatch(r"\\d{2}", value):
+        return value
+    endpoint = {"commune": "communes", "departement": "departements", "region": "regions"}[kind]
+    response = await client.get(f"https://geo.api.gouv.fr/{endpoint}", params={"nom": value, "fields": "code,nom", "limit": 1})
+    if response.status_code >= 400:
+        raise HTTPException(502, "La localisation n’a pas pu être vérifiée.")
+    matches = response.json()
+    if not matches:
+        raise HTTPException(404, "Localisation introuvable.")
+    return str(matches[0].get("code", "")).strip()
+
+
 @app.get("/api/offres")
-async def offres_emploi(code_rome: str = Query(..., min_length=5, max_length=5), commune: str = Query("", max_length=100), departement: str = Query("", max_length=3), distance: int = Query(0, ge=0, le=100), type_contrat: str = Query("", max_length=10)):
+async def offres_emploi(code_rome: str = Query(..., min_length=5, max_length=5), commune: str = Query("", max_length=100), departement: str = Query("", max_length=100), region: str = Query("", max_length=100), distance: int = Query(0, ge=0, le=100), type_contrat: str = Query("", max_length=10)):
     token = await france_travail_token()
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     params = {"codeROME": code_rome.upper().strip(), "range": "0-19"}
-    if commune.strip():
-        params["commune"] = commune.strip()
-        if distance:
-            params["distance"] = distance
-    elif departement.strip():
-        params["departement"] = departement.strip()
-    if type_contrat.strip():
-        params["typeContrat"] = type_contrat.strip().upper()
     url = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
     async with httpx.AsyncClient(timeout=15) as client:
+        if commune.strip():
+            params["commune"] = await resolve_geo_code(client, "commune", commune)
+            if distance:
+                params["distance"] = distance
+        elif departement.strip():
+            params["departement"] = await resolve_geo_code(client, "departement", departement)
+        elif region.strip():
+            params["region"] = await resolve_geo_code(client, "region", region)
+        if type_contrat.strip():
+            params["typeContrat"] = type_contrat.strip().upper()
         response = await client.get(url, params=params, headers=headers)
     if response.status_code == 429:
         raise HTTPException(429, "Le service Offres d’emploi est momentanément très sollicité.")
