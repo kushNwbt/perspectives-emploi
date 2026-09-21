@@ -34,7 +34,7 @@ async function handleFile(file){
     sessionStorage.setItem("perspectives_cv_analysis",JSON.stringify(result));
     showStatus("CV analysé avec succès. Ouverture du diagnostic…","ok");
     renderSessionSummary();
-    setTimeout(()=>openCvDiagnostic(),250);
+    setTimeout(()=>openCvView(),250);
   }catch(e){
     showStatus("Impossible de joindre le serveur d’analyse. Le CV n’a pas été envoyé.","error");
   }finally{choose.disabled=false;}
@@ -48,6 +48,8 @@ drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
 const homeSections=[...document.querySelectorAll("main > section:not(.diagnostic-view), main > footer")];
 const cvDiagnostic=document.getElementById("cvDiagnostic");
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function normalizeSkill(value){return String(value||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim()}
+function overlapScore(a,b){const left=a.split(" ").filter(x=>x.length>=4),right=new Set(b.split(" ").filter(x=>x.length>=4));if(!left.length||!right.size)return 0;return left.filter(x=>right.has(x)).length/Math.max(1,Math.min(left.length,right.size))}
 function renderCvDiagnostic(){
   const raw=sessionStorage.getItem("perspectives_cv_analysis");
   document.getElementById("diagEmpty").hidden=!!raw;
@@ -72,9 +74,9 @@ function renderSessionSummary(){
   let cv=null,job=null,offers=[];try{cv=JSON.parse(sessionStorage.getItem("perspectives_cv_analysis"))}catch(e){}try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}try{offers=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]")}catch(e){}
   const commune=sessionStorage.getItem("perspectives_offers_commune")||"";
   if(!cv&&!job&&!offers.length&&!commune){box.hidden=true;box.innerHTML="";return}
-  const parts=[cv?"CV analysé":"CV à importer",job?escapeHtml(job.label||job.libelle||job.intitule||job.code||"Métier sélectionné"):"Métier à définir",offers.length+" offre"+(offers.length>1?"s":"")+" sélectionnée"+(offers.length>1?"s":"")];if(commune)parts.push("Zone : "+escapeHtml(commune));
+  const parts=[cv?"CV analysé":"CV à importer",job?esc(job.label||job.libelle||job.intitule||job.code||"Métier sélectionné"):"Métier à définir",offers.length+" offre"+(offers.length>1?"s":"")+" sélectionnée"+(offers.length>1?"s":"")];if(commune)parts.push("Zone : "+esc(commune));
   box.hidden=false;box.innerHTML='<strong>Session en cours</strong><span>'+parts.join(" · ")+'</span><button id="sessionContinue" type="button">Continuer →</button>';
-  document.getElementById("sessionContinue").addEventListener("click",()=>{if(offers.length&&cv)return openComparisonView();if(job)return openOffersView();if(cv)return openSkillsView();openCvDiagnostic()});
+  document.getElementById("sessionContinue").addEventListener("click",()=>{if(offers.length&&cv)return openComparisonView();if(job)return openOffersView();if(cv)return openSkillsView();openCvView()});
 }
 
 function hideAllViews(){document.querySelectorAll(".diagnostic-view").forEach(x=>x.hidden=true);homeSections.forEach(x=>x.hidden=true)}
@@ -186,9 +188,9 @@ async function renderOffers(){
   if(selectedOffers.length){selectionSummary.hidden=false;selectionSummary.innerHTML='<strong>'+selectedOffers.length+' offre'+(selectedOffers.length>1?'s':'')+' sélectionnée'+(selectedOffers.length>1?'s':'')+'</strong> sur 5 pour comparaison <button id="offersGoComparison" type="button">Voir la comparaison →</button>';document.getElementById("offersGoComparison").addEventListener("click",openComparisonView)}else{selectionSummary.hidden=true;selectionSummary.innerHTML=""}
 
   const empty=document.getElementById("offersEmpty"),content=document.getElementById("offersContent"),list=document.getElementById("offersList"),target=document.getElementById("offersTarget");
-  const communeInput=document.getElementById("offersZone");
+  const communeInput=document.getElementById("offersZoneValue");
   const zoneType=document.getElementById("offersZoneType");
-  const radius=document.getElementById("offersRadius");
+  const radius=document.getElementById("offersDistance");
   if(communeInput&&!communeInput.value) communeInput.value=sessionStorage.getItem("perspectives_offers_commune")||"";
   let job=null;try{job=JSON.parse(sessionStorage.getItem("perspectives_target_job"))}catch(e){}
   if(!job){empty.hidden=false;content.hidden=true;empty.textContent="Choisissez d’abord un métier ROME depuis l’accueil pour rechercher des offres.";return}
@@ -196,10 +198,15 @@ async function renderOffers(){
   target.innerHTML='<span>Métier recherché</span><strong>'+esc(job.libelle)+'</strong><b>ROME '+esc(job.code)+'</b>';
   list.innerHTML='<div class="rome-loading">Recherche des offres France Travail…</div>';
   try{
-    const commune=(document.getElementById("offersZone").value||"").trim();
-    const contract=(document.getElementById("offersContract")?.value||"").trim();
+    const commune=(document.getElementById("offersZoneValue").value||"").trim();
     if(commune) sessionStorage.setItem("perspectives_offers_commune",commune); else sessionStorage.removeItem("perspectives_offers_commune");
-    const geoType=zoneType?.value||"commune";\n    const distanceValue=parseInt(radius?.value||"0",10)||0;\n    let geoQuery="";\n    if(geoType==="commune"&&commune)geoQuery="&commune="+encodeURIComponent(commune)+(distanceValue?"&distance="+encodeURIComponent(distanceValue):"");\n    else if(geoType==="departement"&&commune)geoQuery="&departement="+encodeURIComponent(commune);\n    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+geoQuery+(contract?"&type_contrat="+encodeURIComponent(contract):""));
+    const geoType=zoneType?.value||"national";
+    const distanceValue=parseInt(radius?.value||"0",10)||0;
+    let geoQuery="";
+    if(geoType==="commune"&&commune)geoQuery="&commune="+encodeURIComponent(commune)+(distanceValue?"&distance="+encodeURIComponent(distanceValue):"");
+    else if(geoType==="departement"&&commune)geoQuery="&departement="+encodeURIComponent(commune);
+    else if(geoType==="region"&&commune)geoQuery="&region="+encodeURIComponent(commune);
+    const r=await fetch(API_BASE.replace(/\/$/,"")+"/api/offres?code_rome="+encodeURIComponent(job.code)+geoQuery);
     if(!r.ok)throw new Error();
     const data=await r.json(),items=data.offres||[];
     if(!items.length){list.innerHTML='<div class="rome-loading">Aucune offre trouvée pour ce métier'+(commune?' dans la zone « '+esc(commune)+' »':'')+'. '+(commune?'Essayez une autre commune ou videz le filtre pour élargir la recherche.':'Vous pouvez réessayer plus tard ou modifier le métier ciblé.')+'</div>';return}
@@ -240,7 +247,7 @@ function renderComparison(){
   document.getElementById("comparisonReviewSkills").hidden=!targetJob;
   const addOffers=document.getElementById("comparisonAddOffers");addOffers.hidden=!targetJob;
   if(!offers.length){empty.hidden=false;content.hidden=true;empty.innerHTML='<p>Sélectionnez au moins une offre depuis le module Offres avec le bouton « ＋ Comparer ».</p><button id="comparisonEmptyOffers" type="button">Rechercher des offres →</button>';document.getElementById("comparisonEmptyOffers").addEventListener("click",openOffersView);return}
-  if(!cv){empty.hidden=false;content.hidden=true;empty.innerHTML='<p>Les offres sont sélectionnées, mais aucun CV n’est encore analysé.</p><button id="comparisonEmptyCv" type="button">Importer et analyser un CV →</button>';document.getElementById("comparisonEmptyCv").addEventListener("click",openCvDiagnostic);return}
+  if(!cv){empty.hidden=false;content.hidden=true;empty.innerHTML='<p>Les offres sont sélectionnées, mais aucun CV n’est encore analysé.</p><button id="comparisonEmptyCv" type="button">Importer et analyser un CV →</button>';document.getElementById("comparisonEmptyCv").addEventListener("click",openCvView);return}
   empty.hidden=true;content.hidden=false;
   const evidence=(cv&&cv.competences_cv)||[];
   content.innerHTML=offers.map(o=>{
@@ -251,6 +258,7 @@ function renderComparison(){
       const nr=normalizeSkill(req);let best="",score=0;
       evidence.forEach(ev=>{const s=overlapScore(nr,normalizeSkill(ev));if(s>score){score=s;best=ev}});
       const state=score>=.60?"check":score>=.34?"mid":"ask";
+      counts[state]++;
       const symbol=state==="check"?"✓":state==="mid"?"△":"?";
       const note=state==="check"?'Élément proche dans le CV : « '+esc(best)+' ».':state==="mid"?'Indice partiel dans le CV : « '+esc(best)+' ». À préciser.':"Aucun élément suffisamment explicite détecté dans le CV.";
       return '<div class="comparison-requirement"><span class="skill-state '+state+'">'+symbol+'</span><div><strong>'+esc(req)+'</strong><p>'+note+'</p></div></div>';
@@ -343,7 +351,7 @@ function renderPlan(){
   box.innerHTML=summary+steps.map((s,i)=>'<article class="plan-step '+(s.done?"done":"")+'"><span class="plan-number">'+(s.done?"✓":i+1)+'</span><div><h3>'+s.title+'</h3><p>'+s.text+'</p><button class="plan-action" data-plan-action="'+actions[i]+'" type="button">'+(s.done?"Revoir cette étape →":"Ouvrir cette étape →")+'</button></div></article>').join("");
   box.querySelectorAll(".plan-action").forEach(btn=>btn.addEventListener("click",()=>{
     const a=btn.dataset.planAction;
-    if(a==="cv"){openCvDiagnostic();return}
+    if(a==="cv"){openCvView();return}
     if(a==="skills"){openSkillsView();return}
     if(a==="offers"){openOffersView();return}
     if(a==="next"){if(offers.length){openComparisonView()}else if(job){openOffersView()}else{openHome()}}
@@ -370,26 +378,34 @@ document.getElementById("newSessionBtn").addEventListener("click",()=>{
 });
 
 document.getElementById("offersSearch").addEventListener("click",renderOffers);
-document.getElementById("offersZone").addEventListener("keydown",e=>{if(e.key==="Enter")renderOffers()});
-
-const offersCommuneInput=document.getElementById("offersZone");
-const offersClearCommune=document.getElementById("offersClearCommune");
-function syncOffersClear(){offersClearCommune.hidden=!offersCommuneInput.value.trim()}
-offersCommuneInput.addEventListener("input",syncOffersClear);
-offersClearCommune.addEventListener("click",()=>{offersCommuneInput.value="";sessionStorage.removeItem("perspectives_offers_commune");syncOffersClear();renderOffers()});
-syncOffersClear();
+document.getElementById("offersZoneValue").addEventListener("keydown",e=>{if(e.key==="Enter")renderOffers()});
+document.getElementById("offersClearGeo").addEventListener("click",()=>{
+  document.getElementById("offersZoneType").value="national";
+  document.getElementById("offersZoneValue").value="";
+  document.getElementById("offersDistance").value="10";
+  sessionStorage.removeItem("perspectives_offers_commune");
+  syncGeoControls();
+  renderOffers();
+});
 
 document.getElementById("comparisonAddOffers").addEventListener("click",openOffersView);
 
-document.getElementById("comparisonReviewCv").addEventListener("click",openCvDiagnostic);
+document.getElementById("comparisonReviewCv").addEventListener("click",openCvView);
 
 document.getElementById("comparisonReviewSkills").addEventListener("click",openSkillsView);
 
 document.getElementById("comparisonClearOffers").addEventListener("click",()=>{const current=JSON.parse(sessionStorage.getItem("perspectives_compare_offers")||"[]");if(!current.length)return;if(confirm("Vider les offres sélectionnées pour la comparaison ?")){sessionStorage.removeItem("perspectives_compare_offers");renderComparison()}});
 
-const offersZoneType=document.getElementById("offersZoneType"),offersRadius=document.getElementById("offersRadius"),offersZone=document.getElementById("offersZone");
-function syncGeoControls(){const t=offersZoneType.value;offersZone.disabled=t==="national";offersRadius.disabled=t!=="commune";if(t==="national"){offersZone.value="";offersRadius.value=""}offersZone.placeholder=t==="region"?"Ex. Île-de-France":t==="departement"?"Ex. Yvelines":"Ex. Trappes, Versailles…"}
-offersZoneType.addEventListener("change",syncGeoControls);syncGeoControls();\nif(offersRadius)offersRadius.addEventListener("change",()=>{if(offersZoneType.value==="commune"&&offersZone.value.trim())renderOffers()});
+const offersZoneType=document.getElementById("offersZoneType"),offersRadius=document.getElementById("offersDistance"),offersZone=document.getElementById("offersZoneValue");
+const offersZoneValueWrap=document.getElementById("offersZoneValueWrap"),offersDistanceWrap=document.getElementById("offersDistanceWrap");
+function syncGeoControls(){
+  const t=offersZoneType.value;
+  offersZoneValueWrap.hidden=t==="national";
+  offersDistanceWrap.hidden=t!=="commune";
+  if(t==="national")offersZone.value="";
+  offersZone.placeholder=t==="region"?"Ex. Île-de-France":t==="departement"?"Ex. Yvelines ou 78":"Ex. Trappes, Versailles…";
+}
+offersZoneType.addEventListener("change",syncGeoControls);syncGeoControls();
 
 // Parité logiciel : navigation interne de Compétences & métiers.
 let activeSkillsTab="overview";
