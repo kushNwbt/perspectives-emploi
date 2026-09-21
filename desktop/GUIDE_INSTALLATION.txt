@@ -1,0 +1,16 @@
+PERSPECTIVES EMPLOI V6.24.5 - VERSION WINDOWS PORTABLE
+
+1. Décompressez entièrement le fichier ZIP.
+2. Ouvrez le dossier "Perspectives Emploi".
+3. Double-cliquez sur "Perspectives Emploi.exe".
+4. Si Windows affiche un avertissement, contactez votre service informatique avant de poursuivre.
+5. Au premier lancement, renseignez vos identifiants API France Travail dans l'écran prévu.
+
+Python n'a pas besoin d'être installé.
+Ne déplacez pas uniquement le fichier EXE : conservez le dossier _internal à côté.
+Une connexion Internet est nécessaire pour les services France Travail.
+
+Confidentialité :
+- aucun identifiant API n'est intégré à ce paquet ;
+- les identifiants saisis sont enregistrés dans le profil Windows de l'utilisateur ;
+- pour une démonstration, utilisez uniquement un CV fictif, anonymisé ou vous appartenant.

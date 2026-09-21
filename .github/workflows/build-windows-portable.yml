@@ -1,0 +1,42 @@
+name: Build Windows portable app
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/build-windows-portable.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: desktop/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r desktop/requirements.txt
+
+      - name: Build portable application
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --add-data "desktop/bloc_marque_rf_france_travail.jpg;." --name "Perspectives Emploi" desktop/app.py
+          Copy-Item desktop/GUIDE_INSTALLATION.txt "dist/Perspectives Emploi/GUIDE_INSTALLATION.txt"
+          Compress-Archive -Path "dist/Perspectives Emploi" -DestinationPath "Perspectives_Emploi_V6_24_5_Windows_Portable.zip"
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Perspectives_Emploi_V6_24_5_Windows_Portable
+          path: Perspectives_Emploi_V6_24_5_Windows_Portable.zip
+          if-no-files-found: error
+          retention-days: 30
