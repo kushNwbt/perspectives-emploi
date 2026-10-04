@@ -1,27 +1,15 @@
-/* Direct navigation hotfix: bypass legacy skills navigation for CV -> jobs flow. */
+/* Deterministic CV -> compatible jobs route. No dependency on legacy view navigation. */
 (function(){
-  function openCompatibleJobs(){
-    if(!sessionStorage.getItem('perspectives_cv_analysis')) return;
+  var ROUTE='compatible';
+
+  function showCompatiblePage(){
+    if(!sessionStorage.getItem('perspectives_cv_analysis')) return false;
     sessionStorage.removeItem('perspectives_target_job');
-
     var main=document.querySelector('main');
-    if(!main) return;
-
-    /* Hide every home block and every other diagnostic view explicitly. */
-    Array.prototype.forEach.call(main.children,function(el){
-      if(el.id==='journeyBar'||el.id==='skillsView') return;
-      el.hidden=true;
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('.diagnostic-view'),function(el){el.hidden=true});
-
-    var choice=document.getElementById('homeChoice');
-    if(choice) choice.hidden=true;
-
-    var bar=document.getElementById('journeyBar');
-    if(bar) bar.hidden=false;
-
     var view=document.getElementById('skillsView');
-    if(!view) return;
+    if(!main||!view) return false;
+
+    Array.prototype.forEach.call(main.children,function(el){el.hidden=true});
     view.hidden=false;
 
     var intro=document.getElementById('skillsIntro');
@@ -31,34 +19,53 @@
     if(content) content.hidden=true;
     if(empty){
       empty.hidden=false;
-      empty.innerHTML='<div id="compatibleJobsHost"><div class="rome-loading">Analyse des expériences et compétences du CV avec le référentiel ROME…</div></div>';
-      var host=document.getElementById('compatibleJobsHost');
-      if(window.PerspectivesCompatibleJobs&&typeof window.PerspectivesCompatibleJobs.render==='function'){
-        Promise.resolve(window.PerspectivesCompatibleJobs.render(host)).catch(function(err){
-          console.error('Compatible jobs navigation hotfix:',err);
-          host.innerHTML='<div class="compatible-empty">La recherche de métiers compatibles est momentanément indisponible.</div>';
-        });
-      }else{
-        host.innerHTML='<div class="compatible-empty">Le module de recherche de métiers n’est pas chargé.</div>';
-      }
+      empty.innerHTML='<div id="compatibleJobsHost"><div class="rome-loading"><strong>Recherche des métiers compatibles en cours…</strong><br>Analyse du CV et correspondance avec le référentiel ROME.</div></div>';
     }
 
     Array.prototype.forEach.call(document.querySelectorAll('.sidebar a'),function(a){a.classList.remove('active')});
     var link=document.querySelector('.sidebar a[href="#competences"]');
     if(link) link.classList.add('active');
-    window.scrollTo({top:0,behavior:'smooth'});
+
+    var host=document.getElementById('compatibleJobsHost');
+    if(host&&window.PerspectivesCompatibleJobs&&typeof window.PerspectivesCompatibleJobs.render==='function'){
+      window.PerspectivesCompatibleJobs.render(host).catch(function(err){
+        console.error(err);
+        host.innerHTML='<div class="compatible-empty">La recherche a rencontré une erreur. Utilisez « Retour à l’accueil » puis relancez la recherche.</div>';
+      });
+    }else if(host){
+      host.innerHTML='<div class="compatible-empty">Le module métiers n’a pas pu démarrer. Rechargez cette page.</div>';
+    }
+    window.scrollTo(0,0);
+    return true;
   }
 
-  /* Capture the generated validation button before any legacy onclick can run. */
+  function goToCompatiblePage(){
+    if(!sessionStorage.getItem('perspectives_cv_analysis')) return;
+    sessionStorage.removeItem('perspectives_target_job');
+    /* Full same-origin reload preserves sessionStorage and eliminates all legacy click/view races. */
+    location.href='/?view='+ROUTE+'&v=20261005-2';
+  }
+
   document.addEventListener('click',function(e){
     var b=e.target.closest&&e.target.closest('#homeLaunch');
     if(!b) return;
     var mode=sessionStorage.getItem('perspectives_home_mode')||'';
     if(mode!=='discover'||b.disabled) return;
     e.preventDefault();
+    e.stopPropagation();
     e.stopImmediatePropagation();
-    openCompatibleJobs();
+    goToCompatiblePage();
   },true);
 
-  window.openCompatibleJobsDirect=openCompatibleJobs;
+  var params=new URLSearchParams(location.search);
+  if(params.get('view')===ROUTE){
+    /* Run after all scripts/controllers have initialized, then take final ownership of the screen. */
+    setTimeout(showCompatiblePage,50);
+    setTimeout(function(){
+      var view=document.getElementById('skillsView');
+      if(view&&view.hidden) showCompatiblePage();
+    },500);
+  }
+
+  window.openCompatibleJobsDirect=goToCompatiblePage;
 })();
