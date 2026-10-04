@@ -1,9 +1,10 @@
-/* Perspectives Emploi — CV -> métiers compatibles, garde-fou persistant */
+/* Perspectives Emploi — CV -> métiers compatibles, garde-fou persistant V1.4 */
 (function(){
-  let rendering=false;
+  let rendering=false,lastSignature='';
   function read(key){try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){return null}}
   function eligible(){return !!read('perspectives_cv_analysis')&&!read('perspectives_target_job')&&!!window.PerspectivesCompatibleJobs}
-  async function showCompatible(){
+  function signature(){const cv=read('perspectives_cv_analysis');try{return JSON.stringify(cv).slice(0,500)}catch(e){return String(Date.now())}}
+  async function showCompatible(force=false){
     if(rendering||!eligible())return false;
     const view=document.getElementById('skillsView'),empty=document.getElementById('skillsEmpty'),content=document.getElementById('skillsContent');
     if(!view||!empty||view.hidden)return false;
@@ -14,24 +15,28 @@
       let host=document.getElementById('compatibleJobsHost');
       if(!host){empty.innerHTML='<div id="compatibleJobsHost"></div>';host=document.getElementById('compatibleJobsHost')}
       const intro=document.getElementById('skillsIntro');
-      if(intro)intro.textContent='À partir des compétences détectées dans votre CV, explorez des métiers ROME compatibles sans avoir à choisir un métier cible au préalable.';
-      if(!host.dataset.loaded){host.dataset.loaded='1';await window.PerspectivesCompatibleJobs.render(host)}
+      if(intro)intro.textContent='À partir des métiers, expériences et compétences détectés dans votre CV, explorez les correspondances ROME les plus solides.';
+      const sig=signature();
+      if(force||host.dataset.loaded!=='1'||lastSignature!==sig){
+        host.dataset.loaded='1';lastSignature=sig;
+        await window.PerspectivesCompatibleJobs.render(host);
+      }
       return true;
     }finally{rendering=false}
   }
-  /* L'ancien renderSkills peut réécrire skillsEmpty après le clic. On observe donc l'écran lui-même :
-     dès qu'il devient visible avec CV + aucun métier, le parcours automatique remplace l'ancien message. */
-  const observer=new MutationObserver(()=>{if(eligible())queueMicrotask(showCompatible)});
+  function schedule(force=false){setTimeout(()=>showCompatible(force),80);setTimeout(()=>showCompatible(force),350);setTimeout(()=>showCompatible(force),900)}
+  const observer=new MutationObserver(()=>{if(eligible())schedule(false)});
   function start(){
     const view=document.getElementById('skillsView'),empty=document.getElementById('skillsEmpty');
     if(view)observer.observe(view,{attributes:true,attributeFilter:['hidden']});
     if(empty)observer.observe(empty,{childList:true,subtree:true,characterData:true});
     document.addEventListener('click',e=>{
-      const t=e.target.closest&&e.target.closest('.sidebar a[href="#competences"],[data-view="skills"]');
-      if(t&&eligible())setTimeout(showCompatible,0);
+      const t=e.target.closest&&e.target.closest('.sidebar a[href="#competences"],[data-view="skills"],[data-journey="skills"]');
+      if(t) schedule(true);
     },true);
-    setTimeout(showCompatible,0);
+    window.addEventListener('hashchange',()=>{if(location.hash==='#competences')schedule(true)});
+    schedule(false);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-  window.openCompatibleJobsView=showCompatible;
+  window.openCompatibleJobsView=()=>showCompatible(true);
 })();
