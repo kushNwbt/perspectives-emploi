@@ -13,6 +13,7 @@
     const content=document.getElementById('skillsContent');
     const intro=document.getElementById('skillsIntro');
     if(content) content.hidden=true;
+    if(!empty)return;
     empty.hidden=false;
     if(intro) intro.textContent='À partir des métiers, expériences et compétences détectés dans votre CV, explorez les correspondances ROME les plus solides.';
     empty.innerHTML='<div id="compatibleJobsHost"><div class="rome-loading">Analyse des expériences et compétences du CV avec le référentiel ROME…</div></div>';
@@ -33,15 +34,21 @@
     if(typeof legacyRenderSkills==='function') return legacyRenderSkills();
   };
 
-  window.openSkillsView=function(){
-    if(typeof window.hideAllViews==='function') window.hideAllViews();
-    else {document.querySelectorAll('.diagnostic-view').forEach(x=>x.hidden=true);document.querySelectorAll('main > section:not(.diagnostic-view), main > footer').forEach(x=>x.hidden=true);}
-    const view=document.getElementById('skillsView');if(view)view.hidden=false;
-    syncHomeChoiceVisibility();
-    window.renderSkills();window.scrollTo({top:0,behavior:'smooth'});
-    document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));const link=document.querySelector('.sidebar a[href="#competences"]');if(link)link.classList.add('active');
-  };
-  window.openCompatibleJobsView=function(){sessionStorage.removeItem('perspectives_target_job');window.openSkillsView()};
+  function showSkillsView(){
+    document.querySelectorAll('.diagnostic-view').forEach(x=>x.hidden=true);
+    document.querySelectorAll('main > section:not(.diagnostic-view), main > footer').forEach(x=>x.hidden=true);
+    const view=document.getElementById('skillsView');
+    if(!view){console.error('skillsView introuvable');return false;}
+    view.hidden=false;
+    const choice=document.getElementById('homeChoice');if(choice)choice.hidden=true;
+    Promise.resolve(window.renderSkills()).catch(e=>console.error('renderSkills',e));
+    window.scrollTo({top:0,behavior:'smooth'});
+    document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
+    const link=document.querySelector('.sidebar a[href="#competences"]');if(link)link.classList.add('active');
+    return true;
+  }
+  window.openSkillsView=showSkillsView;
+  window.openCompatibleJobsView=function(){sessionStorage.removeItem('perspectives_target_job');showSkillsView()};
 
   const style=document.createElement('style');
   style.textContent=`
@@ -89,12 +96,28 @@
     const rules={'#cv':cv,'#competences':cv,'#offres':cv&&job,'#comparaison':cv&&job,'#formations':cv&&job,'#marche':cv&&job,'#plan':cv&&job};
     document.querySelectorAll('.sidebar a').forEach(a=>{if(a.getAttribute('href')==='#accueil'){a.classList.remove('nav-locked');return}const ok=!!rules[a.getAttribute('href')];a.classList.toggle('nav-locked',!ok);a.setAttribute('aria-disabled',ok?'false':'true')});
   }
-  function updateLaunch(){
-    if(!starts[0])return;let row=document.getElementById('homeActionRow');if(!row){row=document.createElement('div');row.id='homeActionRow';row.className='home-action-row';row.innerHTML='<button id="homeLaunch" class="home-action" type="button">Continuer →</button>';starts[(mode==='compare'&&starts[1])?1:0].appendChild(row)}
-    const target=(mode==='compare'&&starts[1])?starts[1]:starts[0];if(row.parentNode!==target)target.appendChild(row);
-    const btn=document.getElementById('homeLaunch');if(!btn)return;btn.disabled=!hasCV()||(mode==='compare'&&!hasJob());btn.textContent=mode==='discover'?'Rechercher les métiers compatibles →':'Comparer le CV au métier →';btn.onclick=()=>{if(btn.disabled)return;if(mode==='discover'){sessionStorage.removeItem('perspectives_target_job');window.openSkillsView()}else window.openSkillsView()};
+  function launchNext(){
+    mode=sessionStorage.getItem('perspectives_home_mode')||mode;
+    if(!hasCV())return;
+    if(mode==='compare'&&!hasJob())return;
+    if(mode==='discover')sessionStorage.removeItem('perspectives_target_job');
+    showSkillsView();
   }
-  document.querySelectorAll('.journey-choice').forEach(b=>b.onclick=()=>{sessionStorage.setItem('perspectives_home_mode',b.dataset.mode);mode=b.dataset.mode;if(mode==='discover'){sessionStorage.removeItem('perspectives_target_job');const rs=document.getElementById('romeSearch');if(rs)rs.value='';const sel=document.getElementById('romeSelected');if(sel){sel.hidden=true;sel.innerHTML=''}}updateHome()});
+  function updateLaunch(){
+    if(!starts[0])return;
+    let row=document.getElementById('homeActionRow');
+    if(!row){row=document.createElement('div');row.id='homeActionRow';row.className='home-action-row';row.innerHTML='<button id="homeLaunch" class="home-action" type="button">Continuer →</button>';starts[0].appendChild(row)}
+    const target=(mode==='compare'&&starts[1])?starts[1]:starts[0];if(row.parentNode!==target)target.appendChild(row);
+    const btn=document.getElementById('homeLaunch');if(!btn)return;
+    btn.disabled=!hasCV()||(mode==='compare'&&!hasJob());
+    btn.textContent=mode==='discover'?'Rechercher les métiers compatibles →':'Comparer le CV au métier →';
+  }
+  document.addEventListener('click',function(e){
+    const launch=e.target.closest('#homeLaunch');
+    if(launch){e.preventDefault();e.stopPropagation();if(!launch.disabled)launchNext();return;}
+    const journey=e.target.closest('.journey-choice');
+    if(journey){e.preventDefault();sessionStorage.setItem('perspectives_home_mode',journey.dataset.mode);mode=journey.dataset.mode;if(mode==='discover'){sessionStorage.removeItem('perspectives_target_job');const rs=document.getElementById('romeSearch');if(rs)rs.value='';const sel=document.getElementById('romeSelected');if(sel){sel.hidden=true;sel.innerHTML=''}}updateHome();}
+  },true);
 
   const observer=new MutationObserver(()=>{updateLocks();updateLaunch();updateRemoveCv();syncHomeChoiceVisibility()});
   const status=document.getElementById('cvStatus');if(status)observer.observe(status,{childList:true,attributes:true,subtree:true});
@@ -105,12 +128,7 @@
     const old=head.querySelector('button[id$="BackHome"],#backHome');if(!old)return;
     const wrap=document.createElement('div');wrap.className='view-nav-extra';
     const prev=document.createElement('button');prev.type='button';prev.textContent='← Page précédente';
-    prev.onclick=()=>{
-      const current=head.closest('.diagnostic-view');const id=current&&current.id;
-      if(id==='offersView'&&typeof window.openSkillsView==='function')return window.openSkillsView();
-      if(id==='comparisonView'&&typeof window.openOffersView==='function')return window.openOffersView();
-      if(typeof window.openHome==='function')return window.openHome();
-    };
+    prev.onclick=()=>{const current=head.closest('.diagnostic-view');const id=current&&current.id;if(id==='offersView'&&typeof window.openSkillsView==='function')return window.openSkillsView();if(id==='comparisonView'&&typeof window.openOffersView==='function')return window.openOffersView();if(typeof window.openHome==='function')return window.openHome();};
     old.parentNode.insertBefore(wrap,old);wrap.appendChild(prev);wrap.appendChild(old);old.textContent='⌂ Retour à l’accueil';
   });
 
