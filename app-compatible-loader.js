@@ -1,43 +1,37 @@
-/* Perspectives Emploi — branche le parcours CV -> métiers compatibles sans dépendre du sélecteur historique */
+/* Perspectives Emploi — CV -> métiers compatibles, garde-fou persistant */
 (function(){
+  let rendering=false;
   function read(key){try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){return null}}
+  function eligible(){return !!read('perspectives_cv_analysis')&&!read('perspectives_target_job')&&!!window.PerspectivesCompatibleJobs}
   async function showCompatible(){
-    const cv=read('perspectives_cv_analysis');
-    const job=read('perspectives_target_job');
-    if(!cv || job || !window.PerspectivesCompatibleJobs) return false;
-    if(typeof window.hideAllViews==='function') window.hideAllViews();
-    else {
-      document.querySelectorAll('.diagnostic-view').forEach(x=>x.hidden=true);
-      document.querySelectorAll('main > section:not(.diagnostic-view), main > footer').forEach(x=>x.hidden=true);
-    }
-    const view=document.getElementById('skillsView');
-    const content=document.getElementById('skillsContent');
-    const empty=document.getElementById('skillsEmpty');
-    if(!view||!empty) return false;
-    view.hidden=false;
-    if(content) content.hidden=true;
-    empty.hidden=false;
-    empty.innerHTML='<div id="compatibleJobsHost"></div>';
-    const intro=document.getElementById('skillsIntro');
-    if(intro) intro.textContent='À partir des compétences détectées dans votre CV, explorez des métiers ROME compatibles sans avoir à choisir un métier cible au préalable.';
-    document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
-    const link=document.querySelector('.sidebar a[href="#competences"]');
-    if(link) link.classList.add('active');
-    await window.PerspectivesCompatibleJobs.render(document.getElementById('compatibleJobsHost'));
-    window.scrollTo({top:0,behavior:'smooth'});
-    return true;
+    if(rendering||!eligible())return false;
+    const view=document.getElementById('skillsView'),empty=document.getElementById('skillsEmpty'),content=document.getElementById('skillsContent');
+    if(!view||!empty||view.hidden)return false;
+    rendering=true;
+    try{
+      if(content)content.hidden=true;
+      empty.hidden=false;
+      let host=document.getElementById('compatibleJobsHost');
+      if(!host){empty.innerHTML='<div id="compatibleJobsHost"></div>';host=document.getElementById('compatibleJobsHost')}
+      const intro=document.getElementById('skillsIntro');
+      if(intro)intro.textContent='À partir des compétences détectées dans votre CV, explorez des métiers ROME compatibles sans avoir à choisir un métier cible au préalable.';
+      if(!host.dataset.loaded){host.dataset.loaded='1';await window.PerspectivesCompatibleJobs.render(host)}
+      return true;
+    }finally{rendering=false}
   }
-  function intercept(e){
-    const target=e.target.closest && e.target.closest('.sidebar a[href="#competences"], [data-view="skills"]');
-    if(!target) return;
-    const cv=read('perspectives_cv_analysis'),job=read('perspectives_target_job');
-    if(!cv||job) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    showCompatible();
+  /* L'ancien renderSkills peut réécrire skillsEmpty après le clic. On observe donc l'écran lui-même :
+     dès qu'il devient visible avec CV + aucun métier, le parcours automatique remplace l'ancien message. */
+  const observer=new MutationObserver(()=>{if(eligible())queueMicrotask(showCompatible)});
+  function start(){
+    const view=document.getElementById('skillsView'),empty=document.getElementById('skillsEmpty');
+    if(view)observer.observe(view,{attributes:true,attributeFilter:['hidden']});
+    if(empty)observer.observe(empty,{childList:true,subtree:true,characterData:true});
+    document.addEventListener('click',e=>{
+      const t=e.target.closest&&e.target.closest('.sidebar a[href="#competences"],[data-view="skills"]');
+      if(t&&eligible())setTimeout(showCompatible,0);
+    },true);
+    setTimeout(showCompatible,0);
   }
-  /* Capture sur document : installé après app.js mais exécuté avant les handlers de la cible. */
-  document.addEventListener('click',intercept,true);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
   window.openCompatibleJobsView=showCompatible;
 })();
