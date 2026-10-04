@@ -1,42 +1,76 @@
-/* Perspectives Emploi — CV -> métiers compatibles, garde-fou persistant V1.4 */
+/* Perspectives Emploi — branchement stable du parcours Compétences V2
+   Remplace directement la fonction globale renderSkills d'app.js.
+   Plus de MutationObserver, plus d'interception de clic. */
 (function(){
-  let rendering=false,lastSignature='';
+  const legacyRenderSkills=window.renderSkills;
   function read(key){try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){return null}}
-  function eligible(){return !!read('perspectives_cv_analysis')&&!read('perspectives_target_job')&&!!window.PerspectivesCompatibleJobs}
-  function signature(){const cv=read('perspectives_cv_analysis');try{return JSON.stringify(cv).slice(0,500)}catch(e){return String(Date.now())}}
-  async function showCompatible(force=false){
-    if(rendering||!eligible())return false;
-    const view=document.getElementById('skillsView'),empty=document.getElementById('skillsEmpty'),content=document.getElementById('skillsContent');
-    if(!view||!empty||view.hidden)return false;
-    rendering=true;
+
+  async function renderCompatibleJobs(cv){
+    const empty=document.getElementById('skillsEmpty');
+    const content=document.getElementById('skillsContent');
+    const intro=document.getElementById('skillsIntro');
+    if(content) content.hidden=true;
+    empty.hidden=false;
+    if(intro) intro.textContent='À partir des métiers, expériences et compétences détectés dans votre CV, explorez les correspondances ROME les plus solides.';
+    empty.innerHTML='<div id="compatibleJobsHost"><div class="rome-loading">Analyse des expériences et compétences du CV avec le référentiel ROME…</div></div>';
+    const host=document.getElementById('compatibleJobsHost');
+    if(!window.PerspectivesCompatibleJobs){
+      host.innerHTML='<div class="rome-loading">Le module de recherche de métiers n’est pas disponible. Rechargez la page.</div>';
+      return;
+    }
     try{
+      await window.PerspectivesCompatibleJobs.render(host);
+    }catch(e){
+      console.error('Compatible jobs error',e);
+      host.innerHTML='<div class="rome-loading">La recherche de métiers compatibles est momentanément indisponible.</div>';
+    }
+  }
+
+  /* Fonction appelée nativement par openSkillsView() dans app.js. */
+  window.renderSkills=async function(){
+    const cv=read('perspectives_cv_analysis');
+    const job=read('perspectives_target_job');
+    const empty=document.getElementById('skillsEmpty');
+    const content=document.getElementById('skillsContent');
+    const intro=document.getElementById('skillsIntro');
+
+    if(!cv){
+      if(empty){empty.hidden=false;empty.textContent='Importez d’abord un CV pour analyser les compétences.'}
       if(content)content.hidden=true;
-      empty.hidden=false;
-      let host=document.getElementById('compatibleJobsHost');
-      if(!host){empty.innerHTML='<div id="compatibleJobsHost"></div>';host=document.getElementById('compatibleJobsHost')}
-      const intro=document.getElementById('skillsIntro');
-      if(intro)intro.textContent='À partir des métiers, expériences et compétences détectés dans votre CV, explorez les correspondances ROME les plus solides.';
-      const sig=signature();
-      if(force||host.dataset.loaded!=='1'||lastSignature!==sig){
-        host.dataset.loaded='1';lastSignature=sig;
-        await window.PerspectivesCompatibleJobs.render(host);
-      }
-      return true;
-    }finally{rendering=false}
-  }
-  function schedule(force=false){setTimeout(()=>showCompatible(force),80);setTimeout(()=>showCompatible(force),350);setTimeout(()=>showCompatible(force),900)}
-  const observer=new MutationObserver(()=>{if(eligible())schedule(false)});
-  function start(){
-    const view=document.getElementById('skillsView'),empty=document.getElementById('skillsEmpty');
-    if(view)observer.observe(view,{attributes:true,attributeFilter:['hidden']});
-    if(empty)observer.observe(empty,{childList:true,subtree:true,characterData:true});
-    document.addEventListener('click',e=>{
-      const t=e.target.closest&&e.target.closest('.sidebar a[href="#competences"],[data-view="skills"],[data-journey="skills"]');
-      if(t) schedule(true);
-    },true);
-    window.addEventListener('hashchange',()=>{if(location.hash==='#competences')schedule(true)});
-    schedule(false);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-  window.openCompatibleJobsView=()=>showCompatible(true);
+      if(intro)intro.textContent='Importez un CV pour commencer l’analyse des compétences et des métiers.';
+      return;
+    }
+
+    if(!job){
+      return renderCompatibleJobs(cv);
+    }
+
+    if(intro)intro.textContent='Comparez les compétences détectées dans le CV avec le référentiel ROME du métier sélectionné.';
+    if(typeof legacyRenderSkills==='function') return legacyRenderSkills();
+  };
+
+  /* Le nom global openSkillsView est également remplacé afin que les appels
+     provenant des autres modules utilisent toujours le même parcours. */
+  const legacyOpenSkillsView=window.openSkillsView;
+  window.openSkillsView=function(){
+    if(typeof window.hideAllViews==='function') window.hideAllViews();
+    else {
+      document.querySelectorAll('.diagnostic-view').forEach(x=>x.hidden=true);
+      document.querySelectorAll('main > section:not(.diagnostic-view), main > footer').forEach(x=>x.hidden=true);
+    }
+    const view=document.getElementById('skillsView');
+    if(view)view.hidden=false;
+    window.renderSkills();
+    window.scrollTo({top:0,behavior:'smooth'});
+    document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
+    const link=document.querySelector('.sidebar a[href="#competences"]');
+    if(link)link.classList.add('active');
+  };
+
+  window.openCompatibleJobsView=function(){
+    sessionStorage.removeItem('perspectives_target_job');
+    window.openSkillsView();
+  };
+
+  console.info('Perspectives Emploi: Skills V2 native routing active');
 })();
