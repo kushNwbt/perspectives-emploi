@@ -7,10 +7,8 @@ app = FastAPI(title="Perspectives Emploi ChromeOS")
 
 @app.get("/", response_class=HTMLResponse)
 def home():
+    # index.html owns application script loading. Do not inject a second navigation controller.
     html = (ROOT / "index.html").read_text(encoding="utf-8")
-    # index.html already loads the main scripts. Do not inject duplicate copies.
-    # Add only the deterministic navigation hotfix; version is bumped to defeat browser cache.
-    html = html.replace("</body>", '<script src="/navigation-hotfix.js?v=20261005-4"></script></body>')
     return HTMLResponse(html, headers={"Cache-Control": "no-store, max-age=0"})
 
 @app.get("/{path:path}")
