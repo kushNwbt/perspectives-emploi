@@ -98,10 +98,24 @@
   const status=document.getElementById('cvStatus');if(status)observer.observe(status,{childList:true,attributes:true,subtree:true});
   const selected=document.getElementById('romeSelected');if(selected)observer.observe(selected,{childList:true,attributes:true,subtree:true});
 
+  /* Navigation interne : ne jamais utiliser history.back(), qui peut sortir du site. */
   document.querySelectorAll('.diagnostic-view .diag-head').forEach(head=>{
     const old=head.querySelector('button[id$="BackHome"],#backHome');if(!old)return;
     const wrap=document.createElement('div');wrap.className='view-nav-extra';
-    const prev=document.createElement('button');prev.type='button';prev.textContent='← Page précédente';prev.onclick=()=>history.length>1?history.back():window.openHome&&window.openHome();
+    const prev=document.createElement('button');prev.type='button';prev.textContent='← Page précédente';
+    prev.onclick=()=>{
+      const current=head.closest('.diagnostic-view');
+      const id=current&&current.id;
+      if(id==='offersView' && typeof window.openSkillsView==='function') return window.openSkillsView();
+      if(id==='comparisonView' && typeof window.openOffersView==='function') return window.openOffersView();
+      if(id==='skillsView'){
+        if(typeof window.openHome==='function') return window.openHome();
+      }
+      if(id==='cvDiagnostic'){
+        if(typeof window.openHome==='function') return window.openHome();
+      }
+      if(typeof window.openHome==='function') return window.openHome();
+    };
     old.parentNode.insertBefore(wrap,old);wrap.appendChild(prev);wrap.appendChild(old);old.textContent='⌂ Retour à l’accueil';
   });
 
