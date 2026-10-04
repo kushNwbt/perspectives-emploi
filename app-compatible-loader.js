@@ -37,7 +37,6 @@
   };
   window.openCompatibleJobsView=function(){sessionStorage.removeItem('perspectives_target_job');window.openSkillsView()};
 
-  /* Accueil V2 : deux parcours, navigation progressive et éléments supprimables. */
   const style=document.createElement('style');
   style.textContent=`
     .home-choice{background:#fff;border:1px solid #e4e6ef;border-radius:22px;padding:28px 30px;margin-top:22px}
@@ -89,12 +88,10 @@
   }
   document.querySelectorAll('.journey-choice').forEach(b=>b.onclick=()=>{sessionStorage.setItem('perspectives_home_mode',b.dataset.mode);mode=b.dataset.mode;if(mode==='discover'){sessionStorage.removeItem('perspectives_target_job');const rs=document.getElementById('romeSearch');if(rs)rs.value='';const sel=document.getElementById('romeSelected');if(sel){sel.hidden=true;sel.innerHTML=''}}updateHome()});
 
-  /* Synchronise les sélections créées par app.js sans modifier son moteur. */
   const observer=new MutationObserver(()=>{updateLocks();updateLaunch();updateRemoveCv()});
   const status=document.getElementById('cvStatus');if(status)observer.observe(status,{childList:true,attributes:true,subtree:true});
   const selected=document.getElementById('romeSelected');if(selected)observer.observe(selected,{childList:true,attributes:true,subtree:true});
 
-  /* Boutons retour : conserve le retour accueil existant et ajoute page précédente. */
   document.querySelectorAll('.diagnostic-view .diag-head').forEach(head=>{
     const old=head.querySelector('button[id$="BackHome"],#backHome');if(!old)return;
     const wrap=document.createElement('div');wrap.className='view-nav-extra';
@@ -102,8 +99,30 @@
     old.parentNode.insertBefore(wrap,old);wrap.appendChild(prev);wrap.appendChild(old);old.textContent='⌂ Retour à l’accueil';
   });
 
-  /* Bloque réellement les clics de navigation encore indisponibles. */
   document.querySelector('.sidebar')?.addEventListener('click',e=>{const a=e.target.closest('a.nav-locked');if(a){e.preventDefault();e.stopImmediatePropagation()}},true);
+
+  /* Correctif : dans le parcours CV + métier, l'analyse du CV ne doit pas ouvrir le diagnostic automatiquement. */
+  let suppressNextAutomaticCvOpen=false;
+  if(status){
+    new MutationObserver(()=>{
+      if((sessionStorage.getItem('perspectives_home_mode')||'')==='compare' && hasCV() && /analysé avec succès/i.test(status.textContent||'')){
+        suppressNextAutomaticCvOpen=true;
+        status.textContent='CV analysé avec succès. Choisissez maintenant le métier recherché.';
+        updateHome();
+      }
+    }).observe(status,{childList:true,subtree:true,characterData:true});
+  }
+  const originalOpenCvView=window.openCvView;
+  if(typeof originalOpenCvView==='function'){
+    window.openCvView=function(){
+      if(suppressNextAutomaticCvOpen && (sessionStorage.getItem('perspectives_home_mode')||'')==='compare'){
+        suppressNextAutomaticCvOpen=false;
+        if(typeof window.openHome==='function')window.openHome();
+        return;
+      }
+      return originalOpenCvView.apply(this,arguments);
+    };
+  }
 
   updateHome();
   console.info('Perspectives Emploi: Skills V2 + accueil guidé actifs');
