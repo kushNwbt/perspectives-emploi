@@ -1,5 +1,9 @@
 /* Perspectives Emploi — branchement stable du parcours Compétences V2 */
 (function(){
+  /* Garde d'initialisation : évite les blocs d'accueil, styles et écouteurs en double. */
+  if(window.__perspectivesCompatibleLoaderLoaded)return;
+  window.__perspectivesCompatibleLoaderLoaded=true;
+
   const legacyRenderSkills=window.renderSkills;
   function read(key){try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){return null}}
 
@@ -55,6 +59,8 @@
   let mode=sessionStorage.getItem('perspectives_home_mode')||'';
 
   if(welcome){
+    /* Nettoie aussi un éventuel doublon laissé par une ancienne version mise en cache. */
+    document.querySelectorAll('#homeChoice,.home-choice').forEach(x=>x.remove());
     const choice=document.createElement('section');choice.className='home-choice';choice.id='homeChoice';
     choice.innerHTML='<h2>Comment souhaitez-vous commencer ?</h2><p>Choisissez le parcours adapté à la situation du candidat.</p><div class="journey-choices"><button type="button" class="journey-choice" data-mode="discover"><strong>Rechercher un métier à partir d’un CV</strong><span>Analyse le parcours, les expériences et les compétences pour proposer les métiers les plus cohérents.</span><b>CV → métiers compatibles</b></button><button type="button" class="journey-choice" data-mode="compare"><strong>CV + métier recherché</strong><span>Analyse le CV puis le compare à un métier ROME déjà envisagé afin d’identifier les acquis et les écarts.</span><b>CV + métier → comparaison</b></button></div>';
     welcome.insertAdjacentElement('afterend',choice);
