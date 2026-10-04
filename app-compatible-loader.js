@@ -1,82 +1,58 @@
-/* Perspectives Emploi — branchement stable du parcours Compétences V2 */
+/* Perspectives Emploi — accueil guidé et navigation stable */
 (function(){
   if(window.__perspectivesCompatibleLoaderLoaded)return;
   window.__perspectivesCompatibleLoaderLoaded=true;
 
-  const legacyRenderSkills=window.renderSkills;
-  function read(key){try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){return null}}
-  function isHomeVisible(){const w=document.querySelector('main > .welcome');return !!w&&!w.hidden&&getComputedStyle(w).display!=='none'}
-  function syncHomeChoiceVisibility(){const c=document.getElementById('homeChoice');if(c)c.hidden=!isHomeVisible()}
-
-  async function renderCompatibleJobs(cv){
-    const empty=document.getElementById('skillsEmpty');
-    const content=document.getElementById('skillsContent');
-    const intro=document.getElementById('skillsIntro');
-    if(content) content.hidden=true;
-    if(!empty)return;
-    empty.hidden=false;
-    if(intro) intro.textContent='À partir des métiers, expériences et compétences détectés dans votre CV, explorez les correspondances ROME les plus solides.';
-    empty.innerHTML='<div id="compatibleJobsHost"><div class="rome-loading">Analyse des expériences et compétences du CV avec le référentiel ROME…</div></div>';
-    const host=document.getElementById('compatibleJobsHost');
-    if(!window.PerspectivesCompatibleJobs){host.innerHTML='<div class="rome-loading">Le module de recherche de métiers n’est pas disponible. Rechargez la page.</div>';return;}
-    try{await window.PerspectivesCompatibleJobs.render(host)}catch(e){console.error('Compatible jobs error',e);host.innerHTML='<div class="rome-loading">La recherche de métiers compatibles est momentanément indisponible.</div>'}
-  }
-
-  window.renderSkills=async function(){
-    const cv=read('perspectives_cv_analysis');
-    const job=read('perspectives_target_job');
-    const empty=document.getElementById('skillsEmpty');
-    const content=document.getElementById('skillsContent');
-    const intro=document.getElementById('skillsIntro');
-    if(!cv){if(empty){empty.hidden=false;empty.textContent='Importez d’abord un CV pour analyser les compétences.'}if(content)content.hidden=true;if(intro)intro.textContent='Importez un CV pour commencer l’analyse des compétences et des métiers.';return;}
-    if(!job)return renderCompatibleJobs(cv);
-    if(intro)intro.textContent='Comparez les compétences détectées dans le CV avec le référentiel ROME du métier sélectionné.';
-    if(typeof legacyRenderSkills==='function') return legacyRenderSkills();
-  };
-
-  function showSkillsView(){
-    document.querySelectorAll('.diagnostic-view').forEach(x=>x.hidden=true);
-    document.querySelectorAll('main > section:not(.diagnostic-view), main > footer').forEach(x=>x.hidden=true);
-    const view=document.getElementById('skillsView');
-    if(!view){console.error('skillsView introuvable');return false;}
-    view.hidden=false;
-    const choice=document.getElementById('homeChoice');if(choice)choice.hidden=true;
-    Promise.resolve(window.renderSkills()).catch(e=>console.error('renderSkills',e));
-    window.scrollTo({top:0,behavior:'smooth'});
-    document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
-    const link=document.querySelector('.sidebar a[href="#competences"]');if(link)link.classList.add('active');
-    return true;
-  }
-  window.openSkillsView=showSkillsView;
-  window.openCompatibleJobsView=function(){sessionStorage.removeItem('perspectives_target_job');showSkillsView()};
-
-  const style=document.createElement('style');
-  style.textContent=`
-    .home-choice{background:#fff;border:1px solid #e4e6ef;border-radius:22px;padding:28px 30px;margin-top:22px}
-    .home-choice[hidden]{display:none!important}
-    .home-choice h2{margin:0 0 6px;font-size:22px;color:#22275f}.home-choice>p{margin:0 0 20px;color:#777b91;font-size:13px}
-    .journey-choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}.journey-choice{border:1px solid #d9ddeb;background:#fff;border-radius:17px;padding:20px;text-align:left;cursor:pointer;color:#22275f;transition:.15s}.journey-choice:hover,.journey-choice.selected{border-color:#283276;background:#f5f6ff;box-shadow:0 7px 20px rgba(40,50,118,.08)}.journey-choice strong{display:block;font-size:16px;margin-bottom:7px}.journey-choice span{display:block;color:#73788e;font-size:12px;line-height:1.45}.journey-choice b{display:inline-block;margin-top:14px;color:#283276;font-size:12px}
-    .home-input-hidden{display:none!important}.modules{display:none!important}.sidebar a.nav-locked{opacity:.32;pointer-events:none;filter:grayscale(1)}
-    .remove-cv{margin-left:8px!important;background:#fff!important;color:#8b2b2b!important;border:1px solid #e7caca!important}.home-action-row{display:flex;justify-content:flex-end;margin-top:14px}.home-action{border:0;background:#283276;color:#fff;border-radius:11px;padding:12px 18px;font-weight:700;cursor:pointer}.home-action:disabled{opacity:.4;cursor:not-allowed}
-    .view-nav-extra{display:flex;gap:8px;margin-left:auto}.view-nav-extra button{border:1px solid #d6d9e7;background:#fff;color:#283276;border-radius:11px;padding:11px 15px;font-weight:700;cursor:pointer}
-    @media(max-width:850px){.journey-choices{grid-template-columns:1fr}.view-nav-extra{width:100%;flex-wrap:wrap}}
-  `;document.head.appendChild(style);
-
+  const API=window.PERSPECTIVES_API_URL||'https://perspectives-emploi-api-production.up.railway.app';
+  const read=k=>{try{return JSON.parse(sessionStorage.getItem(k)||'null')}catch(e){return null}};
+  const hasCV=()=>!!sessionStorage.getItem('perspectives_cv_analysis');
+  const hasJob=()=>!!sessionStorage.getItem('perspectives_target_job');
   const main=document.querySelector('main');
   const welcome=main&&main.querySelector('.welcome');
   const starts=main?[...main.querySelectorAll(':scope > section.start')]:[];
   const modules=main&&main.querySelector(':scope > section.modules');
+  const status=document.getElementById('cvStatus');
+  const fileInput=document.getElementById('cvFile');
+  const choose=document.getElementById('cvChoose');
+  const drop=document.getElementById('cvDropZone');
+  const title=document.getElementById('cvFileTitle');
+  const info=document.getElementById('cvFileInfo');
+  const romeSearch=document.getElementById('romeSearch');
+  const romeSelected=document.getElementById('romeSelected');
   let mode=sessionStorage.getItem('perspectives_home_mode')||'';
+
+  const style=document.createElement('style');
+  style.textContent=`.home-choice{background:#fff;border:1px solid #e4e6ef;border-radius:22px;padding:28px 30px;margin-top:22px}.home-choice[hidden]{display:none!important}.home-choice h2{margin:0 0 6px;font-size:22px;color:#22275f}.home-choice>p{margin:0 0 20px;color:#777b91;font-size:13px}.journey-choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}.journey-choice{border:1px solid #d9ddeb;background:#fff;border-radius:17px;padding:20px;text-align:left;cursor:pointer;color:#22275f}.journey-choice:hover,.journey-choice.selected{border-color:#283276;background:#f5f6ff;box-shadow:0 7px 20px rgba(40,50,118,.08)}.journey-choice strong{display:block;font-size:16px;margin-bottom:7px}.journey-choice span{display:block;color:#73788e;font-size:12px;line-height:1.45}.journey-choice b{display:inline-block;margin-top:14px;color:#283276;font-size:12px}.home-input-hidden{display:none!important}.modules{display:none!important}.sidebar a.nav-locked{opacity:.32;pointer-events:none;filter:grayscale(1)}.remove-cv{margin-left:8px!important;background:#fff!important;color:#8b2b2b!important;border:1px solid #e7caca!important}.home-action-row{display:flex;justify-content:flex-end;margin-top:14px}.home-action{border:0;background:#283276;color:#fff;border-radius:11px;padding:12px 18px;font-weight:700;cursor:pointer}.home-action:disabled{opacity:.4;cursor:not-allowed}.view-nav-extra{display:flex;gap:8px;margin-left:auto}.view-nav-extra button{border:1px solid #d6d9e7;background:#fff;color:#283276;border-radius:11px;padding:11px 15px;font-weight:700;cursor:pointer}@media(max-width:850px){.journey-choices{grid-template-columns:1fr}.view-nav-extra{width:100%;flex-wrap:wrap}}`;
+  document.head.appendChild(style);
 
   if(welcome){
     document.querySelectorAll('#homeChoice,.home-choice').forEach(x=>x.remove());
-    const choice=document.createElement('section');choice.className='home-choice';choice.id='homeChoice';
-    choice.innerHTML='<h2>Comment souhaitez-vous commencer ?</h2><p>Choisissez le parcours adapté à la situation du candidat.</p><div class="journey-choices"><button type="button" class="journey-choice" data-mode="discover"><strong>Rechercher un métier à partir d’un CV</strong><span>Analyse le parcours, les expériences et les compétences pour proposer les métiers les plus cohérents.</span><b>CV → métiers compatibles</b></button><button type="button" class="journey-choice" data-mode="compare"><strong>CV + métier recherché</strong><span>Analyse le CV puis le compare à un métier ROME déjà envisagé afin d’identifier les acquis et les écarts.</span><b>CV + métier → comparaison</b></button></div>';
-    welcome.insertAdjacentElement('afterend',choice);
+    const c=document.createElement('section');c.id='homeChoice';c.className='home-choice';
+    c.innerHTML='<h2>Comment souhaitez-vous commencer ?</h2><p>Choisissez le parcours adapté à la situation du candidat.</p><div class="journey-choices"><button type="button" class="journey-choice" data-mode="discover"><strong>Rechercher un métier à partir d’un CV</strong><span>Analyse le parcours, les expériences et les compétences pour proposer les métiers les plus cohérents.</span><b>CV → métiers compatibles</b></button><button type="button" class="journey-choice" data-mode="compare"><strong>CV + métier recherché</strong><span>Analyse le CV puis le compare à un métier ROME déjà envisagé afin d’identifier les acquis et les écarts.</span><b>CV + métier → comparaison</b></button></div>';
+    welcome.insertAdjacentElement('afterend',c);
   }
 
-  function hasCV(){return !!sessionStorage.getItem('perspectives_cv_analysis')}
-  function hasJob(){return !!sessionStorage.getItem('perspectives_target_job')}
+  function homeVisible(){return !!welcome&&!welcome.hidden&&getComputedStyle(welcome).display!=='none'}
+  function syncChoice(){const c=document.getElementById('homeChoice');if(c)c.hidden=!homeVisible()}
+  function locks(){
+    const cv=hasCV(),job=hasJob();
+    const rules={'#cv':cv,'#competences':cv,'#offres':cv&&job,'#comparaison':cv&&job,'#formations':cv&&job,'#marche':cv&&job,'#plan':cv&&job};
+    document.querySelectorAll('.sidebar a').forEach(a=>{if(a.getAttribute('href')==='#accueil'){a.classList.remove('nav-locked');return}const ok=!!rules[a.getAttribute('href')];a.classList.toggle('nav-locked',!ok);a.setAttribute('aria-disabled',ok?'false':'true')});
+  }
+  function removeCvButton(){
+    if(!drop)return;let b=document.getElementById('removeCv');
+    if(hasCV()&&!b){b=document.createElement('button');b.id='removeCv';b.type='button';b.className='remove-cv';b.textContent='Retirer le CV';drop.appendChild(b);b.onclick=e=>{e.stopPropagation();sessionStorage.removeItem('perspectives_cv_analysis');sessionStorage.removeItem('perspectives_compare_offers');if(fileInput)fileInput.value='';if(title)title.textContent='Importer votre CV';if(info)info.textContent='PDF, DOCX ou TXT · 10 Mo maximum';if(status)status.hidden=true;updateHome()}}
+    if(b)b.hidden=!hasCV();
+  }
+  function launch(){
+    if(!starts[0])return;let row=document.getElementById('homeActionRow');
+    const target=(mode==='compare'&&starts[1])?starts[1]:starts[0];
+    if(!row){row=document.createElement('div');row.id='homeActionRow';row.className='home-action-row';row.innerHTML='<button id="homeLaunch" class="home-action" type="button">Continuer →</button>';target.appendChild(row)}else if(row.parentNode!==target)target.appendChild(row);
+    const b=document.getElementById('homeLaunch');if(!b)return;
+    b.disabled=!hasCV()||(mode==='compare'&&!hasJob());
+    b.textContent=mode==='discover'?'Rechercher les métiers compatibles →':'Comparer le CV au métier →';
+    b.onclick=()=>{if(b.disabled)return;if(mode==='discover')sessionStorage.removeItem('perspectives_target_job');if(typeof window.openSkillsView==='function')window.openSkillsView();};
+  }
   function updateHome(){
     mode=sessionStorage.getItem('perspectives_home_mode')||'';
     document.querySelectorAll('.journey-choice').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));
@@ -84,61 +60,59 @@
     if(starts[1])starts[1].classList.toggle('home-input-hidden',mode!=='compare');
     if(modules)modules.style.setProperty('display','none','important');
     const hint=starts[0]&&starts[0].querySelector('.section-title p');if(hint)hint.textContent=mode==='compare'?'Importez le CV à comparer au métier recherché.':'Importez le CV pour rechercher les métiers les plus cohérents.';
-    syncHomeChoiceVisibility();updateRemoveCv();updateLocks();updateLaunch();
+    syncChoice();removeCvButton();locks();launch();
   }
-  function updateRemoveCv(){
-    const upload=document.getElementById('cvDropZone');if(!upload)return;let b=document.getElementById('removeCv');
-    if(hasCV()&&!b){b=document.createElement('button');b.id='removeCv';b.type='button';b.className='remove-cv';b.textContent='Retirer le CV';upload.appendChild(b);b.onclick=()=>{sessionStorage.removeItem('perspectives_cv_analysis');sessionStorage.removeItem('perspectives_compare_offers');const fi=document.getElementById('cvFile');if(fi)fi.value='';const t=document.getElementById('cvFileTitle');if(t)t.textContent='Importer votre CV';const i=document.getElementById('cvFileInfo');if(i)i.textContent='PDF, DOCX ou TXT · 10 Mo maximum';const s=document.getElementById('cvStatus');if(s)s.hidden=true;updateHome()}}
-    if(b)b.hidden=!hasCV();
-  }
-  function updateLocks(){
-    const cv=hasCV(),job=hasJob();
-    const rules={'#cv':cv,'#competences':cv,'#offres':cv&&job,'#comparaison':cv&&job,'#formations':cv&&job,'#marche':cv&&job,'#plan':cv&&job};
-    document.querySelectorAll('.sidebar a').forEach(a=>{if(a.getAttribute('href')==='#accueil'){a.classList.remove('nav-locked');return}const ok=!!rules[a.getAttribute('href')];a.classList.toggle('nav-locked',!ok);a.setAttribute('aria-disabled',ok?'false':'true')});
-  }
-  function launchNext(){
-    mode=sessionStorage.getItem('perspectives_home_mode')||mode;
-    if(!hasCV())return;
-    if(mode==='compare'&&!hasJob())return;
-    if(mode==='discover')sessionStorage.removeItem('perspectives_target_job');
-    showSkillsView();
-  }
-  function updateLaunch(){
-    if(!starts[0])return;
-    let row=document.getElementById('homeActionRow');
-    if(!row){row=document.createElement('div');row.id='homeActionRow';row.className='home-action-row';row.innerHTML='<button id="homeLaunch" class="home-action" type="button">Continuer →</button>';starts[0].appendChild(row)}
-    const target=(mode==='compare'&&starts[1])?starts[1]:starts[0];if(row.parentNode!==target)target.appendChild(row);
-    const btn=document.getElementById('homeLaunch');if(!btn)return;
-    btn.disabled=!hasCV()||(mode==='compare'&&!hasJob());
-    btn.textContent=mode==='discover'?'Rechercher les métiers compatibles →':'Comparer le CV au métier →';
-  }
-  document.addEventListener('click',function(e){
-    const launch=e.target.closest('#homeLaunch');
-    if(launch){e.preventDefault();e.stopPropagation();if(!launch.disabled)launchNext();return;}
-    const journey=e.target.closest('.journey-choice');
-    if(journey){e.preventDefault();sessionStorage.setItem('perspectives_home_mode',journey.dataset.mode);mode=journey.dataset.mode;if(mode==='discover'){sessionStorage.removeItem('perspectives_target_job');const rs=document.getElementById('romeSearch');if(rs)rs.value='';const sel=document.getElementById('romeSelected');if(sel){sel.hidden=true;sel.innerHTML=''}}updateHome();}
-  },true);
 
-  const observer=new MutationObserver(()=>{updateLocks();updateLaunch();updateRemoveCv();syncHomeChoiceVisibility()});
-  const status=document.getElementById('cvStatus');if(status)observer.observe(status,{childList:true,attributes:true,subtree:true});
-  const selected=document.getElementById('romeSelected');if(selected)observer.observe(selected,{childList:true,attributes:true,subtree:true});
-  if(main)new MutationObserver(syncHomeChoiceVisibility).observe(main,{subtree:true,attributes:true,attributeFilter:['hidden','style','class']});
-
-  document.querySelectorAll('.diagnostic-view .diag-head').forEach(head=>{
-    const old=head.querySelector('button[id$="BackHome"],#backHome');if(!old)return;
-    const wrap=document.createElement('div');wrap.className='view-nav-extra';
-    const prev=document.createElement('button');prev.type='button';prev.textContent='← Page précédente';
-    prev.onclick=()=>{const current=head.closest('.diagnostic-view');const id=current&&current.id;if(id==='offersView'&&typeof window.openSkillsView==='function')return window.openSkillsView();if(id==='comparisonView'&&typeof window.openOffersView==='function')return window.openOffersView();if(typeof window.openHome==='function')return window.openHome();};
-    old.parentNode.insertBefore(wrap,old);wrap.appendChild(prev);wrap.appendChild(old);old.textContent='⌂ Retour à l’accueil';
-  });
-
+  document.querySelectorAll('.journey-choice').forEach(b=>b.onclick=()=>{sessionStorage.setItem('perspectives_home_mode',b.dataset.mode);mode=b.dataset.mode;if(mode==='discover'){sessionStorage.removeItem('perspectives_target_job');if(romeSearch)romeSearch.value='';if(romeSelected){romeSelected.hidden=true;romeSelected.innerHTML=''}}updateHome()});
   document.querySelector('.sidebar')?.addEventListener('click',e=>{const a=e.target.closest('a.nav-locked');if(a){e.preventDefault();e.stopImmediatePropagation()}},true);
 
-  let suppressNextAutomaticCvOpen=false;
-  if(status){new MutationObserver(()=>{if((sessionStorage.getItem('perspectives_home_mode')||'')==='compare'&&hasCV()&&/analysé avec succès/i.test(status.textContent||'')){suppressNextAutomaticCvOpen=true;status.textContent='CV analysé avec succès. Choisissez maintenant le métier recherché.';updateHome();}}).observe(status,{childList:true,subtree:true,characterData:true});}
-  const originalOpenCvView=window.openCvView;
-  if(typeof originalOpenCvView==='function'){window.openCvView=function(){if(suppressNextAutomaticCvOpen&&(sessionStorage.getItem('perspectives_home_mode')||'')==='compare'){suppressNextAutomaticCvOpen=false;if(typeof window.openHome==='function')window.openHome();return;}return originalOpenCvView.apply(this,arguments);};}
+  /* IMPORTANT : l'import du CV ne navigue plus. On intercepte l'ancien gestionnaire avant qu'il ne lance openCvView(). */
+  async function analyseOnly(file){
+    if(!file)return;
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
+    if(!['pdf','docx','txt'].includes(ext)){if(status){status.hidden=false;status.className='cv-status error';status.textContent='Format non accepté. Utilisez un PDF, DOCX ou TXT.'}return}
+    if(file.size>10*1024*1024){if(status){status.hidden=false;status.className='cv-status error';status.textContent='Le fichier dépasse 10 Mo.'}return}
+    if(title)title.textContent=file.name;if(info)info.textContent=(file.size/1024/1024).toFixed(2)+' Mo · analyse en cours';
+    if(choose)choose.disabled=true;if(status){status.hidden=false;status.className='cv-status loading';status.textContent='Analyse du CV en cours…'}
+    try{
+      const fd=new FormData();fd.append('cv',file);
+      const r=await fetch(API.replace(/\/$/, '')+'/api/cv/analyse',{method:'POST',body:fd});if(!r.ok)throw new Error('HTTP '+r.status);
+      const result=await r.json();sessionStorage.setItem('perspectives_cv_analysis',JSON.stringify(result));
+      if(info)info.textContent=(file.size/1024/1024).toFixed(2)+' Mo · CV analysé';
+      if(status){status.hidden=false;status.className='cv-status ok';status.textContent=mode==='compare'?'CV analysé avec succès. Choisissez maintenant le métier recherché.':'CV analysé avec succès. Vous pouvez maintenant rechercher les métiers compatibles.'}
+      updateHome();
+    }catch(e){if(status){status.hidden=false;status.className='cv-status error';status.textContent='Impossible de joindre le serveur d’analyse. Le CV n’a pas été envoyé.'}}
+    finally{if(choose)choose.disabled=false}
+  }
+  if(fileInput){
+    document.addEventListener('change',e=>{if(e.target!==fileInput)return;e.stopImmediatePropagation();e.preventDefault();analyseOnly(fileInput.files&&fileInput.files[0])},true);
+  }
+  if(drop){
+    document.addEventListener('drop',e=>{if(!drop.contains(e.target))return;e.preventDefault();e.stopImmediatePropagation();drop.classList.remove('drag');analyseOnly(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])},true);
+  }
 
-  updateHome();syncHomeChoiceVisibility();
-  console.info('Perspectives Emploi: Skills V2 + accueil guidé actifs');
+  /* Métiers compatibles : sans métier cible, utiliser le moteur de propositions. */
+  const legacyRenderSkills=window.renderSkills;
+  async function renderCompatible(){
+    const empty=document.getElementById('skillsEmpty'),content=document.getElementById('skillsContent'),intro=document.getElementById('skillsIntro');
+    if(content)content.hidden=true;if(empty)empty.hidden=false;if(intro)intro.textContent='À partir des métiers, expériences et compétences détectés dans votre CV, explorez les correspondances ROME les plus solides.';
+    if(!empty)return;empty.innerHTML='<div id="compatibleJobsHost"><div class="rome-loading">Analyse des expériences et compétences du CV avec le référentiel ROME…</div></div>';
+    const host=document.getElementById('compatibleJobsHost');if(!window.PerspectivesCompatibleJobs){host.innerHTML='<div class="rome-loading">Le module de recherche de métiers n’est pas disponible. Rechargez la page.</div>';return}try{await window.PerspectivesCompatibleJobs.render(host)}catch(e){host.innerHTML='<div class="rome-loading">La recherche de métiers compatibles est momentanément indisponible.</div>'}
+  }
+  window.renderSkills=async function(){const cv=read('perspectives_cv_analysis'),job=read('perspectives_target_job');if(!cv)return;if(!job)return renderCompatible();if(typeof legacyRenderSkills==='function')return legacyRenderSkills()};
+  const originalOpenSkills=window.openSkillsView;
+  window.openSkillsView=function(){syncChoice();if(typeof originalOpenSkills==='function')originalOpenSkills();setTimeout(syncChoice,0)};
+
+  /* Page précédente reste dans l'application. */
+  document.querySelectorAll('.diagnostic-view .diag-head').forEach(head=>{
+    const old=head.querySelector('button[id$="BackHome"],#backHome');if(!old||head.querySelector('.view-nav-extra'))return;
+    const wrap=document.createElement('div');wrap.className='view-nav-extra';const prev=document.createElement('button');prev.type='button';prev.textContent='← Page précédente';
+    prev.onclick=()=>{const id=head.closest('.diagnostic-view')?.id;if(id==='offersView'&&typeof window.openSkillsView==='function')return window.openSkillsView();if(id==='comparisonView'&&typeof window.openOffersView==='function')return window.openOffersView();if(typeof window.openHome==='function')return window.openHome()};
+    old.parentNode.insertBefore(wrap,old);wrap.append(prev,old);old.textContent='⌂ Retour à l’accueil';
+  });
+
+  if(main)new MutationObserver(()=>{syncChoice();locks();removeCvButton();launch()}).observe(main,{subtree:true,attributes:true,attributeFilter:['hidden','style','class']});
+  if(romeSelected)new MutationObserver(()=>{locks();launch()}).observe(romeSelected,{subtree:true,childList:true,attributes:true});
+  updateHome();
+  console.info('Perspectives Emploi: import CV sans navigation automatique actif');
 })();
