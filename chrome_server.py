@@ -11,7 +11,7 @@ def home():
     # The guided loader had a recursive MutationObserver on <main> that could
     # saturate Chromium's main thread. Load the narrow guard immediately before it.
     marker = '<script src="app-compatible-loader.js?v=1.2.0"></script>'
-    guarded = '<script src="mutation-guard.js?v=20261005-1"></script>' + marker
+    guarded = '<script src="mutation-guard.js?v=20261005-1"></script>' + marker + '<script src="multi-job-selection.js?v=20261005-1"></script>'
     html = html.replace(marker, guarded)
     return HTMLResponse(html, headers={"Cache-Control": "no-store, max-age=0"})
 
