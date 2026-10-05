@@ -8,10 +8,10 @@ app = FastAPI(title="Perspectives Emploi ChromeOS")
 @app.get("/", response_class=HTMLResponse)
 def home():
     html = (ROOT / "index.html").read_text(encoding="utf-8")
-    # The guided loader had a recursive MutationObserver on <main> that could
-    # saturate Chromium's main thread. Load the narrow guard immediately before it.
+    # Load the mutation guard before the guided loader and force a fresh asset
+    # version so Chromium/Railway never keeps an older interaction fix cached.
     marker = '<script src="app-compatible-loader.js?v=1.2.0"></script>'
-    guarded = '<script src="mutation-guard.js?v=20261005-1"></script>' + marker + '<script src="multi-job-selection.js?v=20261005-1"></script>'
+    guarded = '<script src="mutation-guard.js?v=20261005-2"></script><script src="app-compatible-loader.js?v=20261005-2"></script><script src="multi-job-selection.js?v=20261005-2"></script>'
     html = html.replace(marker, guarded)
     return HTMLResponse(html, headers={"Cache-Control": "no-store, max-age=0"})
 
